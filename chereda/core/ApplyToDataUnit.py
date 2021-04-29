@@ -40,10 +40,10 @@ class ApplyToDataUnit:
             result = []
             for i in range(len(res[0])):
                 arg = list(map(lambda x: x[i], res))
-                result.append(DataUnit.from_dict(dict(zip(units, arg))))
+                result.append(DataUnit(**dict(zip(units, arg))))
             result = tuple(result)
         else:
-            result = DataUnit.from_dict(dict(zip(units, res)))
+            result = DataUnit(**dict(zip(units, res)))
         return result
     
     def apply_with_fiber(self, wrapped, instance, *args, **kwargs):
