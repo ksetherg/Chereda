@@ -1,7 +1,7 @@
 import ray
 
-from .DataLayer import DataLayer
 from .Node import Node
+from .Data import DataLayer
 
 class Layer(Node):
     def __init__(self, *nodes, **kwargs):
@@ -18,7 +18,7 @@ class Layer(Node):
         
     def fit(self, x, y):
         """Consider args as DataLayer"""
-        assert len(self.layer) == len(x) == len(y), 'Layer and data shapes must be same'
+        assert len(self.layer) == len(x) == len(y), 'Layer and data shapes must be same.'
         actors = [ray.remote(node.__class__).remote(**node.__dict__) for node in self.layer]
         res = [node.fit.remote(*args) for node, args in zip(actors, zip(x, y))]
         """Update states"""
@@ -31,7 +31,7 @@ class Layer(Node):
         return X, Y
     
     def predict_forward(self, x):
-        assert len(self.layer) == len(x), 'Layer and data shapes must be same'        
+        assert len(self.layer) == len(x), 'Layer and data shapes must be same.'        
         res = [ray.remote(node.predict_forward.__func__).remote(node, xx) for node, xx in zip(self.layer, x)]
         result = ray.get(res)
         result1d = DataLayer(*self.flatten_forward(result))
@@ -39,7 +39,7 @@ class Layer(Node):
     
     def predict_backward(self, y):
         y2 = self.flatten_backward(y)
-        assert len(self.layer) == len(y2), 'Layer and data shapes must be same'
+        assert len(self.layer) == len(y2), 'Layer and data shapes must be same.'
         res = [ray.remote(node.predict_backward.__func__).remote(node, yy) for node, yy in zip(self.layer, y2)]
         result = DataLayer(*ray.get(res))
         return result

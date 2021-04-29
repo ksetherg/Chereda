@@ -1,9 +1,11 @@
 import copy
+
+from .Node import Node
 from .Layer import Layer
 
 
 class Pipeline(Node):
-    """пайплайн работает с даталайерами"""
+    """Pipeline works with DataLayer and Layer"""
     def __init__(self, *nodes, **kwargs):
         super().__init__(**kwargs)
         _nodes_ = []
@@ -13,7 +15,7 @@ class Pipeline(Node):
             elif isinstance(node, Node):
                 _nodes_.append(node)
             else:
-                raise Exception('Unknown node type!')
+                raise Exception('Unknown node type.')
                 
         self.nodes = _nodes_
         self.layers = None
@@ -55,7 +57,7 @@ class Pipeline(Node):
     
     def predict_forward(self, x):
         if self.layers is None:
-            raise Exception('Fit your model before!')
+            raise Exception('Fit your model before.')
             
         for layer in self.layers:     
             x = layer.predict_forward(x)
@@ -63,7 +65,7 @@ class Pipeline(Node):
     
     def predict_backward(self, y):   
         if self.layers is None:
-            raise Exception('Fit your model before!')
+            raise Exception('Fit your model before.')
             
         for layer in self.layers[::-1]:
             y = layer.predict_backward(y)
