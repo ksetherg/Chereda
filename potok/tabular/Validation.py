@@ -6,7 +6,8 @@ class Validation(Node):
         super().__init__(**kwargs)
         self.folder = folder
 
-    def fit(self, x: DataUnit, y: DataUnit) -> (DataLayer, DataLayer): 
+    def fit(self, x: DataUnit, y: DataUnit) -> (DataLayer, DataLayer):
+        assert isinstance(x, DataUnit) == isinstance(y, DataUnit), 'Validation works only with DataUnits.'
         self.folder.generate_folds(x, y)
         '''can be parallelized'''
         x2 = self.folder.get_folds(x)
@@ -20,4 +21,6 @@ class Validation(Node):
 
     def predict_backward(self, y: DataLayer) -> DataUnit:
         unfolded = self.folder.combine_folds(y)
-        """after averaging data i should replace train with valid"""
+        unfolded = DataUnit(train=unfolded['valid'], test=unfolded['test'])
+        return unfolded
+        
