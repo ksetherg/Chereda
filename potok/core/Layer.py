@@ -1,7 +1,7 @@
 import ray
 
 from .Node import Node
-from .Data import DataLayer
+from .Data import Data, DataUnit, DataLayer
 
 class Layer(Node):
     def __init__(self, *nodes, **kwargs):
@@ -26,19 +26,20 @@ class Layer(Node):
         [node.__setstate__(state) for node, state in zip(self.layer, states)]
         
         res = ray.get(res)
-        X = DataLayer(*self.flatten_forward(map(lambda x: x[0], res)))
-        Y = DataLayer(*self.flatten_forward(map(lambda x: x[1], res)))
-        return X, Y
+
+        x2 = DataLayer(*self._flatten_forward_(map(lambda x: x[0], res)))
+        y2 = DataLayer(*self._flatten_forward_(map(lambda x: x[1], res)))
+        return x2, y2
     
     def predict_forward(self, x):
         assert len(self.layer) == len(x), 'Layer and data shapes must be same.'        
         res = [ray.remote(node.predict_forward.__func__).remote(node, xx) for node, xx in zip(self.layer, x)]
         result = ray.get(res)
-        result1d = DataLayer(*self.flatten_forward(result))
+        result1d = DataLayer(*self._flatten_forward_(result))
         return result1d
     
     def predict_backward(self, y):
-        y2 = self.flatten_backward(y)
+        y2 = self._flatten_backward_(y)
         assert len(self.layer) == len(y2), 'Layer and data shapes must be same.'
         res = [ray.remote(node.predict_backward.__func__).remote(node, yy) for node, yy in zip(self.layer, y2)]
         result = DataLayer(*ray.get(res))
@@ -47,17 +48,21 @@ class Layer(Node):
     def _flatten_forward_(self, irr_list):
         flat = []
         shapes = []
-        for i in irr_list:
-            if not isinstance(i, list):
+        for i in irr_list:   
+            if isinstance(i, (DataLayer, list)):
+                flat.extend(i)
+                shapes.append(len(i))
+            elif isinstance(i, (DataUnit, Data)):
                 flat.append(i)
                 shapes.append(0)
             else:
-                flat.extend(i)
-                shapes.append(len(i))
+                raise Exception(f'Unknown type of data {i.__class__.__name__}')
         self.shapes = shapes
         return flat
     
     def _flatten_backward_(self, list1d):
+        if isinstance(list1d, DataLayer):
+            list1d = list1d.to_list()
         start = 0
         end = 0
         irr_list = []
@@ -68,7 +73,7 @@ class Layer(Node):
                 irr_list.append(sl)
             else:
                 end = start + d
-                sl = list1d[start:end]
+                sl = DataLayer(*list1d[start:end])
                 start = end
                 irr_list.append(sl)
         return irr_list

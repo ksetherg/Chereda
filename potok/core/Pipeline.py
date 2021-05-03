@@ -1,6 +1,6 @@
 import copy
 
-from .Node import Node
+from .Node import Node, Operator
 from .Layer import Layer
 
 
@@ -12,7 +12,7 @@ class Pipeline(Node):
         for node in nodes:
             if isinstance(node, Pipeline):
                 _nodes_.extend(node.nodes)
-            elif isinstance(node, Node):
+            elif isinstance(node, (Node, Operator)):
                 _nodes_.append(node)
             else:
                 raise Exception('Unknown node type.')
@@ -74,6 +74,11 @@ class Pipeline(Node):
     def fit_predict(self, x, y):
         x2, y2 = self.fit(x, y)
         y1 = self.predict_backward(y2)
+        return y1
+
+    def predict(self, x):
+        x2 = self.predict_forward(x)
+        y1 = self.predict_backward(x2)
         return y1
     
     def __str__(self):

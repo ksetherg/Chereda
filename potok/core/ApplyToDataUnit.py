@@ -2,6 +2,8 @@ from functools import partial
 from itertools import starmap
 import ray
 
+from .Data import DataUnit
+
 
 class ApplyToDataUnit:
     def __init__(self, wrapped, mode='all', backend='ray'):
@@ -28,9 +30,8 @@ class ApplyToDataUnit:
             units.remove('train')
 
         args2 = [[arg[unit] for arg in args] for unit in units]
-        if self.backend == 'fiber':
-            res = self.apply_with_fiber(wrapped, instance, *args2, **kwargs)
-        elif self.backend == 'ray':
+        
+        if self.backend == 'ray':
             res = self.apply_with_ray(wrapped, instance, *args2, **kwargs)
         elif self.backend == 'map':
             res = self.apply_with_map(wrapped, instance, *args2, **kwargs)
@@ -45,14 +46,6 @@ class ApplyToDataUnit:
         else:
             result = DataUnit(**dict(zip(units, res)))
         return result
-    
-    def apply_with_fiber(self, wrapped, instance, *args, **kwargs):
-        zpool = ZPool(processes=len(args))
-        res = [zpool.apply(wrapped.__func__, args=(instance, *arg), kwds=kwargs) for arg in args]
-#         res = [zpool.apply(wrapped, args=arg, kwds=kwargs) for arg in args]
-        zpool.close()
-        zpool.join()
-        return res
     
     def apply_with_ray(self, wrapped, instance, *args, **kwargs):
         state = ray.put(instance)

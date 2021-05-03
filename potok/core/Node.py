@@ -1,5 +1,7 @@
+import copy
 from .Data import Data, DataUnit
 from .ApplyToDataUnit import ApplyToDataUnit
+
 
 class Node:
     def __init__(self, **kwargs):
@@ -18,25 +20,43 @@ class Node:
     
     def __str__(self) -> str:
         return self.name
-    
-    def _fit_(self, x: Data, y: Data) -> (Data, Data):
-        return x, y
         
     def fit(self, x: DataUnit, y: DataUnit) -> (DataUnit, DataUnit):
-        return ApplyToDataUnit(self._fit_)(x, y)
-        
-    def _predict_forward_(self, x: Data) -> Data:
+        return x, y
+
+    def predict_forward(self, x : DataUnit) -> DataUnit:
         return x
     
-    def predict_forward(self, x : DataUnit) -> DataUnit:
-        return ApplyToDataUnit(self._predict_forward_)(x)
-            
-    def _predict_backward_(self, y: Data) -> Data:
-        return y
-    
-    def predict_backward(self, y: DataUnit) -> DataUnit:
-        return ApplyToDataUnit(self._predict_backward_)(y)
+    def predict_backward(self, y_frwd: DataUnit) -> DataUnit:
+        return y_frwd
 
     @property
     def copy(self) -> 'Node':
         return copy.copy(self)
+
+
+class Operator(Node):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        
+    def x_forward(self, x: Data) -> Data:
+        return x
+
+    def y_forward(self, y: Data, x: Data, x_frwd: Data) -> Data:
+        return y
+
+    def y_backward(self, y_frwd: Data) -> Data:
+        return y_frwd
+
+    def fit(self, x: DataUnit, y: DataUnit) -> (DataUnit, DataUnit):
+        x_frwd = ApplyToDataUnit(self.x_forward)(x)
+        y_frwd = ApplyToDataUnit(self.y_forward)(y, x, x_frwd)
+        return x_frwd, y_frwd
+
+    def predict_forward(self, x: DataUnit) -> DataUnit:
+        x_frwd = ApplyToDataUnit(self.x_forward)(x)
+        return x_frwd
+
+    def predict_backward(self, y_frwd: DataUnit) -> DataUnit:
+        y = ApplyToDataUnit(self.y_backward)(y_frwd)
+        return y

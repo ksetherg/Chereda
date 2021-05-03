@@ -113,7 +113,7 @@ class DataUnit(Data):
         return DataUnit(**res)
 
     @classmethod
-    def combine(cls, datas: 'DataLayer') -> 'DataUnit':
+    def combine(cls, datas: List['DataUnit']) -> 'DataUnit':
         '''can be parallelized'''
         args = {}
         for unit in datas.units:

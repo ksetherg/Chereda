@@ -1,26 +1,34 @@
-from ..core import Node, DataLayer, DataUnit
+from ..core import Operator, DataLayer, DataUnit
 
 
-class Validation(Node):
+class Validation(Operator):
     def __init__(self, folder, **kwargs):
         super().__init__(**kwargs)
+        # may be it's better to merge the logic of Folder and Validation
         self.folder = folder
 
-    def fit(self, x: DataUnit, y: DataUnit) -> (DataLayer, DataLayer):
-        assert isinstance(x, DataUnit) == isinstance(y, DataUnit), 'Validation works only with DataUnits.'
-        self.folder.generate_folds(x, y)
-        '''can be parallelized'''
-        x2 = self.folder.get_folds(x)
-        y2 = self.folder.get_folds(y)
-        return x2, y2
-
-    def predict_forward(self, x: DataUnit) -> DataLayer:
-        assert self.folder.folds is not None, 'Fit your Folder before.'
+    def x_forward(self, x: DataUnit) -> DataLayer:
         x2 = self.folder.get_folds(x)
         return x2
 
-    def predict_backward(self, y: DataLayer) -> DataUnit:
-        unfolded = self.folder.combine_folds(y)
-        unfolded = DataUnit(train=unfolded['valid'], test=unfolded['test'])
-        return unfolded
-        
+    def y_forward(self, y: DataUnit, x: DataUnit, x_frwd: DataUnit) -> DataLayer:
+        y2 = self.folder.get_folds(y)
+        return y2
+
+    def y_backward(self, y_frwd: DataLayer) -> DataUnit:
+        y = self.folder.combine_folds(y_frwd)
+        return y
+
+    def fit(self, x: DataUnit, y: DataUnit) -> (DataLayer, DataLayer):
+        self.folder.generate_folds(x, y)
+        x_frwd = self.x_forward(x)
+        y_frwd = self.y_forward(y, x, x_frwd)
+        return x_frwd, y_frwd
+
+    def predict_forward(self, x: DataUnit) -> DataLayer:
+        x_frwd = self.x_forward(x)
+        return x_frwd
+
+    def predict_backward(self, y_frwd: DataLayer) -> DataUnit:
+        y = self.y_backward(y_frwd)
+        return y

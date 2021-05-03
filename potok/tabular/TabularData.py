@@ -11,20 +11,20 @@ class TabularData(Data):
 
     def __init__(self, 
                  data: pd.DataFrame,
-                 targets: list = None, 
+                 target: list = None, 
                  ):
         self.data = data
-        self.targets = targets
+        self.target = target
 
     @property
     def X(self) -> pd.DataFrame:
-        columns = [col for col in self.data.columns if col not in self.targets]
+        columns = [col for col in self.data.columns if col not in self.target]
         X = self.copy(data=self.data[columns])
         return X
 
     @property
     def Y(self) -> pd.DataFrame:
-        columns = [col for col in self.data.columns if col in self.targets]
+        columns = [col for col in self.data.columns if col in self.target]
         Y = self.copy(data=self.data[columns])
         return Y
 
