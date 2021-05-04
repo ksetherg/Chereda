@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import List, Mapping, Collection, Iterator, Any
 import copy
+import ray
 
 
 @dataclass
@@ -84,42 +85,44 @@ class DataUnit(Data):
     
     @property
     def X(self) -> 'DataUnit':
-        '''can be parallelized'''
         X = {k: v.X for k, v in self}
         return DataUnit(**X)
     
     @property
     def Y(self) -> 'DataUnit':
-        '''can be parallelized'''
         Y = {k: v.Y for k, v in self}
         return DataUnit(**Y)
     
     @property
     def index(self) -> 'DataUnit':
-        '''can be parallelized'''
         indx = {k: v.index for k, v in self}
         return DataUnit(**indx)
 
     def get_by_index(self, index: 'DataUnit') -> 'DataUnit':
-        '''can be parallelized'''
         assert self.units == index.units, 'Units must match.'
-        res = {k1: v1.get_by_index(v2) for (k1, v1), (k2, v2) in zip(self, index)}
+        f = ray.remote(lambda x, y: x.get_by_index(y))
+        res = ray.get([f.remote(v1, v2) for (k1, v1), (k2, v2) in zip(self, index)])
+        res = {k: v for k, v in zip(self.units, res)}
+        # res = {k1: v1.get_by_index(v2) for (k1, v1), (k2, v2) in zip(self, index)}
         return DataUnit(**res)
 
     def reindex(self, index: 'DataUnit') -> 'DataUnit':
-        '''can be parallelized'''
         assert self.units == index.units, 'Units must match.'
-        res = {k1: v1.reindex(v2) for (k1, v1), (k2, v2) in zip(self, index)}
+        f = ray.remote(lambda x, y: x.reindex(y))
+        res = ray.get([f.remote(v1, v2) for (k1, v1), (k2, v2) in zip(self, index)])
+        res = {k: v for k, v in zip(self.units, res)}
+        # res = {k1: v1.reindex(v2) for (k1, v1), (k2, v2) in zip(self, index)}
         return DataUnit(**res)
 
     @classmethod
-    def combine(cls, datas: List['DataUnit']) -> 'DataUnit':
-        '''can be parallelized'''
-        args = {}
-        for unit in datas.units:
-            unit_datas = datas[unit].to_list()
-            args[unit] = unit_datas[0].__class__.combine(unit_datas)
-        return DataUnit(**args)
+    def combine(cls, datas: 'DataLayer') -> 'DataUnit':
+        units = datas.units
+        data_cls = datas.args[0][units[0]].__class__
+
+        f = ray.remote(lambda x: data_cls.combine(x))
+        res = ray.get([f.remote(datas[unit].to_list()) for unit in units])
+        res = {k: v for k, v in zip(units, res)}
+        return DataUnit(**res)
     
 
 @dataclass(init=False)
@@ -170,32 +173,31 @@ class DataLayer(Data):
 
     @property
     def X(self) -> 'DataLayer':
-        '''can be parallelized'''
         X = [arg.X for arg in self]
         return DataLayer(*X)
     
     @property
     def Y(self) -> 'DataLayer':
-        '''can be parallelized'''
         Y = [arg.Y for arg in self]
         return DataLayer(*Y)
     
     @property
     def index(self) -> 'DataLayer':
-        '''can be parallelized'''
         indx = [v.index for v in self]
         return DataLayer(*indx)
 
     def get_by_index(self, index: 'DataLayer') -> 'DataLayer':
-        '''can be parallelized'''
         assert len(self) == len(index), 'DataLayers must be same shape.'
-        res = [v1.get_by_index(v2) for v1, v2 in zip(self, index)]
+        f = ray.remote(lambda x, y: x.get_by_index(y))
+        res = ray.get([f.remote(v1, v2) for v1, v2 in zip(self, index)])
+        # res = [v1.get_by_index(v2) for v1, v2 in zip(self, index)]
         return DataLayer(*res)
 
     def reindex(self, index: 'DataLayer') -> 'DataLayer':
-        '''can be parallelized'''
         assert len(self) == len(index), 'DataLayers must be same shape.'
-        res = [v1.reindex(v2) for v1, v2 in zip(self, index)]
+        f = ray.remote(lambda x, y: x.reindex(y))
+        res = ray.get([f.remote(v1, v2) for v1, v2 in zip(self, index)])
+        # res = [v1.reindex(v2) for v1, v2 in zip(self, index)]
         return DataLayer(*res)
 
     @classmethod

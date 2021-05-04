@@ -11,7 +11,7 @@ class Layer(Node):
             if isinstance(node, Node):
                 layer.append(node)
             else:
-                raise Exception('Unknown node type!')
+                raise Exception(f'Unknown node type={node.__class__.__name__}')
                 
         self.layer = layer
         self.shapes = None
@@ -20,15 +20,15 @@ class Layer(Node):
         """Consider args as DataLayer"""
         assert len(self.layer) == len(x) == len(y), 'Layer and data shapes must be same.'
         actors = [ray.remote(node.__class__).remote(**node.__dict__) for node in self.layer]
-        res = [node.fit.remote(*args) for node, args in zip(actors, zip(x, y))]
+        res = [node.fit.remote(xx, yy) for node, xx, yy in zip(actors, x, y)]
         """Update states"""
         states = ray.get([node.__getstate__.remote() for node in actors])
         [node.__setstate__(state) for node, state in zip(self.layer, states)]
         
         res = ray.get(res)
 
-        x2 = DataLayer(*self._flatten_forward_(map(lambda x: x[0], res)))
-        y2 = DataLayer(*self._flatten_forward_(map(lambda x: x[1], res)))
+        x2 = DataLayer(*self._flatten_forward_(list(map(lambda x: x[0], res))))
+        y2 = DataLayer(*self._flatten_forward_(list(map(lambda x: x[1], res))))
         return x2, y2
     
     def predict_forward(self, x):
@@ -48,7 +48,7 @@ class Layer(Node):
     def _flatten_forward_(self, irr_list):
         flat = []
         shapes = []
-        for i in irr_list:   
+        for i in irr_list:
             if isinstance(i, (DataLayer, list)):
                 flat.extend(i)
                 shapes.append(len(i))
@@ -56,7 +56,7 @@ class Layer(Node):
                 flat.append(i)
                 shapes.append(0)
             else:
-                raise Exception(f'Unknown type of data {i.__class__.__name__}')
+                raise Exception(f'Unknown type of data={i.__class__.__name__}')
         self.shapes = shapes
         return flat
     

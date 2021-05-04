@@ -15,18 +15,14 @@ class Folder:
         folder = KFold(n_splits=self.n_folds, shuffle=True, random_state=self.seed)
         folds = DataLayer(*[DataUnit(train, valid) for train, valid in folder.split(indx)])
         self.folds = folds
-        self.index = x.index
 
     def get_folds(self, xy: DataUnit) -> DataLayer:
         assert xy['valid'] is None, 'Currnetly Double Validation is not allowed.'
         valid_xy =  DataUnit(train=xy['train'], valid=xy['train'])
         folds = [valid_xy.get_by_index(indx) for indx in self.folds] #can be parallelized
-        [fold.update({'test': xy['test']}) for fold in folds] #can be parallelized
+        folds = [fold.copy(**{'test': xy['test']}) for fold in folds] #can be parallelized
         return DataLayer(*folds)
 
     def combine_folds(self, datas: DataLayer) -> DataUnit:
         combined = DataUnit.combine(datas)
-        assert combined['valid'] is not None, 'Validation is None.'
-        combined = DataUnit(train=combined['valid'], test=combined['test'])
-        combined = combined.reindex(self.index)
         return combined

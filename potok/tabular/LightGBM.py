@@ -32,7 +32,7 @@ class LightGBM(Operator):
             objective=objective,
             # class_weight='balanced',
             importance_type='split',
-            n_jobs=2,
+            n_jobs=4,
         )
 
         self.training_params = dict(
