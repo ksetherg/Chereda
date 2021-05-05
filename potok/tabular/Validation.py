@@ -22,7 +22,7 @@ class Validation(Operator):
         y = DataUnit(train=y['valid'], test=y['test'])
         y = y.reindex(self.index)
         return y
-
+        
     def fit(self, x: DataUnit, y: DataUnit) -> (DataLayer, DataLayer):
         self.folder.generate_folds(x, y)
         self.index = y.index

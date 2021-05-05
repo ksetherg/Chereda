@@ -6,8 +6,8 @@ import ray
 
 @dataclass
 class Data:
-    # def __str__(self) -> str:
-    #     return self.__class__.__name__
+    def __str__(self) -> str:
+        return self.__class__.__name__
 
     def __getstate__(self) -> dict:
         state = self.__dict__.copy()
@@ -100,18 +100,18 @@ class DataUnit(Data):
 
     def get_by_index(self, index: 'DataUnit') -> 'DataUnit':
         assert self.units == index.units, 'Units must match.'
-        f = ray.remote(lambda x, y: x.get_by_index(y))
-        res = ray.get([f.remote(v1, v2) for (k1, v1), (k2, v2) in zip(self, index)])
-        res = {k: v for k, v in zip(self.units, res)}
-        # res = {k1: v1.get_by_index(v2) for (k1, v1), (k2, v2) in zip(self, index)}
+        # f = ray.remote(lambda x, y: x.get_by_index(y))
+        # res = ray.get([f.remote(v1, v2) for (k1, v1), (k2, v2) in zip(self, index)])
+        # res = {k: v for k, v in zip(self.units, res)}
+        res = {k1: v1.get_by_index(v2) for (k1, v1), (k2, v2) in zip(self, index)}
         return DataUnit(**res)
 
     def reindex(self, index: 'DataUnit') -> 'DataUnit':
         assert self.units == index.units, 'Units must match.'
-        f = ray.remote(lambda x, y: x.reindex(y))
-        res = ray.get([f.remote(v1, v2) for (k1, v1), (k2, v2) in zip(self, index)])
-        res = {k: v for k, v in zip(self.units, res)}
-        # res = {k1: v1.reindex(v2) for (k1, v1), (k2, v2) in zip(self, index)}
+        # f = ray.remote(lambda x, y: x.reindex(y))
+        # res = ray.get([f.remote(v1, v2) for (k1, v1), (k2, v2) in zip(self, index)])
+        # res = {k: v for k, v in zip(self.units, res)}
+        res = {k1: v1.reindex(v2) for (k1, v1), (k2, v2) in zip(self, index)}
         return DataUnit(**res)
 
     @classmethod
@@ -119,9 +119,12 @@ class DataUnit(Data):
         units = datas.units
         data_cls = datas.args[0][units[0]].__class__
 
-        f = ray.remote(lambda x: data_cls.combine(x))
-        res = ray.get([f.remote(datas[unit].to_list()) for unit in units])
-        res = {k: v for k, v in zip(units, res)}
+        # f = ray.remote(lambda x: data_cls.combine(x))
+        # res = ray.get([f.remote(datas[unit].to_list()) for unit in units])
+        # res = {k: v for k, v in zip(units, res)}
+
+        f = lambda x: data_cls.combine(x)
+        res = {unit: f(datas[unit].to_list()) for unit in units}
         return DataUnit(**res)
     
 
@@ -188,16 +191,16 @@ class DataLayer(Data):
 
     def get_by_index(self, index: 'DataLayer') -> 'DataLayer':
         assert len(self) == len(index), 'DataLayers must be same shape.'
-        f = ray.remote(lambda x, y: x.get_by_index(y))
-        res = ray.get([f.remote(v1, v2) for v1, v2 in zip(self, index)])
-        # res = [v1.get_by_index(v2) for v1, v2 in zip(self, index)]
+        # f = ray.remote(lambda x, y: x.get_by_index(y))
+        # res = ray.get([f.remote(v1, v2) for v1, v2 in zip(self, index)])
+        res = [v1.get_by_index(v2) for v1, v2 in zip(self, index)]
         return DataLayer(*res)
 
     def reindex(self, index: 'DataLayer') -> 'DataLayer':
         assert len(self) == len(index), 'DataLayers must be same shape.'
-        f = ray.remote(lambda x, y: x.reindex(y))
-        res = ray.get([f.remote(v1, v2) for v1, v2 in zip(self, index)])
-        # res = [v1.reindex(v2) for v1, v2 in zip(self, index)]
+        # f = ray.remote(lambda x, y: x.reindex(y))
+        # res = ray.get([f.remote(v1, v2) for v1, v2 in zip(self, index)])
+        res = [v1.reindex(v2) for v1, v2 in zip(self, index)]
         return DataLayer(*res)
 
     @classmethod

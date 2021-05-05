@@ -19,8 +19,8 @@ class Folder:
     def get_folds(self, xy: DataUnit) -> DataLayer:
         assert xy['valid'] is None, 'Currnetly Double Validation is not allowed.'
         valid_xy =  DataUnit(train=xy['train'], valid=xy['train'])
-        folds = [valid_xy.get_by_index(indx) for indx in self.folds] #can be parallelized
-        folds = [fold.copy(**{'test': xy['test']}) for fold in folds] #can be parallelized
+        folds = [valid_xy.get_by_index(indx) for indx in self.folds] 
+        folds = [fold.copy(**{'test': xy['test']}) for fold in folds] 
         return DataLayer(*folds)
 
     def combine_folds(self, datas: DataLayer) -> DataUnit:

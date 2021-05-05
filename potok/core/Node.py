@@ -20,7 +20,7 @@ class Node:
     
     def __str__(self) -> str:
         return self.name
-        
+
     def fit(self, x: DataUnit, y: DataUnit) -> (DataUnit, DataUnit):
         return x, y
 
@@ -38,25 +38,28 @@ class Node:
 class Operator(Node):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        
+    
+    @ApplyToDataUnit()
     def x_forward(self, x: Data) -> Data:
         return x
 
+    @ApplyToDataUnit()
     def y_forward(self, y: Data, x: Data, x_frwd: Data) -> Data:
         return y
 
+    @ApplyToDataUnit()
     def y_backward(self, y_frwd: Data) -> Data:
         return y_frwd
 
     def fit(self, x: DataUnit, y: DataUnit) -> (DataUnit, DataUnit):
-        x_frwd = ApplyToDataUnit(self.x_forward)(x)
-        y_frwd = ApplyToDataUnit(self.y_forward)(y, x, x_frwd)
+        x_frwd = self.x_forward(x)
+        y_frwd = self.y_forward(y, x, x_frwd)
         return x_frwd, y_frwd
 
     def predict_forward(self, x: DataUnit) -> DataUnit:
-        x_frwd = ApplyToDataUnit(self.x_forward)(x)
+        x_frwd = self.x_forward(x)
         return x_frwd
 
     def predict_backward(self, y_frwd: DataUnit) -> DataUnit:
-        y = ApplyToDataUnit(self.y_backward)(y_frwd)
+        y = self.y_backward(y_frwd)
         return y

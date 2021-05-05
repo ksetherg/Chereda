@@ -24,7 +24,7 @@ class Pipeline(Node):
         self.current_predict = 0
     
     def next_layer(self, node, n):
-        layer = [node.copy for _ in range(n)]
+        layer = [node.copy for i in range(n)]
         return Layer(*layer)
     
     def fit(self, x, y):

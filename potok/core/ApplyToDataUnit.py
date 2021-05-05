@@ -1,23 +1,23 @@
 from functools import partial
 from itertools import starmap
+import wrapt
 import ray
 
 from .Data import DataUnit
 
 
 class ApplyToDataUnit:
-    def __init__(self, wrapped, mode='all', backend='ray'):
-        self.wrapped = wrapped
+    def __init__(self, mode='all', backend='map'):
+        # self.wrapped = wrapped
         self.mode = mode
         self.backend = backend
       
-    #     @wrapt.decorator """Not picklable"""
-#     def __call__(self, wrapped, instance, args, kwargs):
-#         print('call')
-#         return self.apply(wrapped, instance, *args, **kwargs)
+    @wrapt.decorator
+    def __call__(self, wrapped, instance, args, kwargs):
+        return self.apply(wrapped, instance, *args, **kwargs)
       
-    def __call__(self, *args, **kwargs):
-        return self.apply(self.wrapped, self.wrapped.__self__, *args, **kwargs)
+    # def __call__(self, *args, **kwargs):
+    #     return self.apply(self.wrapped, self.wrapped.__self__, *args, **kwargs)
     
     def apply(self, wrapped, instance, *args, **kwargs):
         all_units = []

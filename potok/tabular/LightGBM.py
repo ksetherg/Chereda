@@ -26,8 +26,8 @@ class LightGBM(Operator):
         self.weight = weight
 
         self.model_params = dict(
-            n_estimators=2000,
-            learning_rate=0.03,
+            n_estimators=200,
+            learning_rate=0.1,
             num_class = num_class,
             objective=objective,
             # class_weight='balanced',
@@ -45,6 +45,85 @@ class LightGBM(Operator):
         self.index = None
         self._feature_importance_= None
 
+    @ApplyToDataUnit()
+    def x_forward(self, x: Data) -> Data:
+        x2 = x.data[self.features]
+        return x2
+
+    @ApplyToDataUnit()
+    def y_forward(self, y: Data, x: Data, x_frwd: Data) -> Data:
+        y2 = y.data
+        y2 = y2.dropna()
+        return y2
+
+    @ApplyToDataUnit()
+    def y_backward(self, y_frwd: Data) -> Data:
+        y = TabularData(data=y_frwd, target=self.target)
+        return y
+
+    def fit(self, x: DataUnit, y: DataUnit) -> DataUnit:
+        self._set_model()
+
+        self.index = y.index
+
+        if self.target is None:
+            self.target = x['train'].target
+
+        if self.features is None:
+            self.features = x['train'].data.columns
+
+        x_frwd = self.x_forward(x)
+        y_frwd = self.y_forward(y, x, x_frwd)
+
+        x_frwd = x_frwd.reindex(y_frwd.index)
+
+        x_train, x_valid = x_frwd['train'], x_frwd['valid']
+        y_train, y_valid = y_frwd['train'][self.target], y_frwd['valid'][self.target]
+
+        if self.weight is not None:
+            w_train, w_valid = y_frwd['train'][self.weight], y_frwd['valid'][self.weight]
+        else:
+            w_train, w_valid = None, None
+
+        if self.cat_features is not None:
+            self._set_cat_features(list(self.features))
+        else:
+            self.cat_features_idx = 'auto'
+
+        if len(self.target) > 1 and self.mode == "Classifier":
+            y_train = self._ohe_decode_(y_train)
+            y_valid = self._ohe_decode_(y_valid)
+
+        print('Training Model LightGBM')
+        print(f'X_train = {x_train.shape} y_train = {y_train.shape}')
+        print(f'X_valid = {x_valid.shape} y_valid = {y_valid.shape}')
+
+        self.model = self.model.fit(X=x_train, y=y_train, sample_weight=w_train,
+                                    eval_set=[(x_valid, y_valid)], eval_sample_weight=[w_valid],
+                                    categorical_feature=self.cat_features_idx,
+                                    **self.training_params)
+
+        self._make_feature_importance_df_()
+        y2 = self.predict_forward(x)
+        return x, y2
+
+    @ApplyToDataUnit(mode='efficient')
+    def predict_forward(self, x : DataUnit) -> DataUnit:
+        assert self.model is not None, 'Fit model before.'
+        x = x.data[self.features]
+        if self.mode == 'Classifier':
+            prediction = self.model.predict_proba(x)
+            prediction = pd.DataFrame(prediction, index=x.index)
+        elif self.mode == 'Regressor':
+            prediction = self.model.predict(x)
+            prediction = pd.DataFrame(prediction, index=x.index, columns=[self.target])
+        return prediction
+    
+    def predict_backward(self, y_frwd: DataUnit) -> DataUnit:
+        y = self.y_backward(y_frwd)
+        y = y.reindex(self.index.copy(train=None))
+        return y
+    
     def _set_cat_features(self, features):
         cat_features_idx = []
         for cat_feature in self.cat_features:
@@ -67,84 +146,6 @@ class LightGBM(Operator):
         df = df.idxmax(axis=1).to_frame('Target')
         df['Target'] = df['Target'].astype(int)
         return df
-
-    def x_forward(self, x: Data) -> Data:
-        x2 = x.data[self.features]
-        return x2
-
-    def y_forward(self, y: Data, x: Data, x_frwd: Data) -> Data:
-        y2 = y.data #[self.target]
-        y2 = y2.dropna()
-        return y2
-
-    def y_backward(self, y_frwd: Data) -> Data:
-        return y_frwd
-
-    def fit(self, x: DataUnit, y: DataUnit) -> DataUnit:
-        self._set_model()
-
-        self.index = y.index
-
-        if self.target is None:
-            self.target = x['train'].target
-
-        if self.features is None:
-            self.features = x['train'].data.columns
-
-        x_frwd = ApplyToDataUnit(self.x_forward)(x)
-        y_frwd = ApplyToDataUnit(self.y_forward)(y, x, x_frwd)
-
-        x_frwd = x_frwd.reindex(y_frwd.index)
-
-        x_train, x_valid = x_frwd['train'], x_frwd['valid']
-        y_train, y_valid = y_frwd['train'][self.target], y_frwd['valid'][self.target]
-
-        if self.weight is not None:
-            w_train, w_valid = y['train'][self.weight], y['valid'][self.weight]
-        else:
-            w_train, w_valid = None, None
-
-        if self.cat_features is not None:
-            self._set_cat_features(list(self.features))
-        else:
-            self.cat_features_idx = 'auto'
-        
-        if len(self.target) > 1 and self.mode == "Classifier":
-            y_train = self._ohe_decode_(y_train)
-            y_valid = self._ohe_decode_(y_valid)
-
-        print('Training Model LightGBM')
-        print(f'X_train = {x_train.shape} y_train = {y_train.shape}')
-        print(f'X_valid = {x_valid.shape} y_valid = {y_valid.shape}')
-        
-        self.model = self.model.fit(X=x_train, y=y_train, sample_weight=w_train,
-                                    eval_set=[(x_valid, y_valid)], eval_sample_weight=[w_valid],
-                                    categorical_feature=self.cat_features_idx,
-                                    **self.training_params)
-
-        self._make_feature_importance_df_()
-        y2 = self.predict_forward(x)
-        return x, y2
-
-    def _predict_forward_(self, x: Data) -> Data:
-        if self.mode == 'Classifier':
-            prediction = self.model.predict_proba(x)
-            prediction = pd.DataFrame(prediction, index=x.index)
-        elif self.mode == 'Regressor':
-            prediction = self.model.predict(x)
-            prediction = pd.DataFrame(prediction, index=x.index, columns=[self.target])
-        prediction = TabularData(data=prediction, target=self.target)
-        return prediction
-
-    def predict_forward(self, x : DataUnit) -> DataUnit:
-        assert self.model is not None, 'Fit model before.'
-        x_frwd = ApplyToDataUnit(self.x_forward)(x)
-        return ApplyToDataUnit(self._predict_forward_)(x_frwd)
-    
-    def predict_backward(self, y_frwd: DataUnit) -> DataUnit:
-        #y = ApplyToDataUnit(self.y_backward)(y_frwd)
-        y = y_frwd.reindex(self.index)
-        return y
 
     def _make_feature_importance_df_(self):
         feature_importance = self.model.feature_importances_
