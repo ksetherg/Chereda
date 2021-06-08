@@ -25,8 +25,8 @@ class TabularData(Data):
     @property
     def Y(self) -> pd.DataFrame:
         columns = [col for col in self.data.columns if col in self.target]
-        Y = self.copy(data=self.data[columns])
-        return Y
+        y = self.copy(data=self.data[columns])
+        return y
 
     @property
     def index(self):

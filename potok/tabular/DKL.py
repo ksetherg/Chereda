@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import functools
 # import wrapt
+from typing import List, Iterator, Tuple
 
 from ..core import Operator, DataUnit
 
@@ -34,9 +35,8 @@ class Dkl(Operator):
 
     @staticmethod
     def apply_to_member(data, weights_df):
-        df = data.data
-        df_with_weights = pd.concat([df, weights_df], axis=1, sort=False)
-        data_new = data.copy(_data=df_with_weights)
+        df_with_weights = pd.concat([data.data, weights_df], axis=1, sort=False)
+        data_new = data.copy(data=df_with_weights)
         return data_new
 
     def y_forward(self, y: DataUnit, x: DataUnit, x_frwd: DataUnit) -> DataUnit:
@@ -65,7 +65,7 @@ class Dkl(Operator):
     #     '''Probably it should remove Weight column'''
     #     return y_frwd
 
-    def fit(self, x: DataUnit, y: DataUnit) -> (DataUnit, DataUnit):
+    def fit(self, x: DataUnit, y: DataUnit) -> Tuple[DataUnit, DataUnit]:
         if not isinstance(x, DataUnit):
             raise Exception(f'Error: Dkl only works with DataUnit, not with {x.__class__.__name__}')
         self.calc_weights(x['train'].data, x['test'].data)

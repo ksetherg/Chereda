@@ -1,4 +1,5 @@
 import copy
+from typing import List, Iterator, Tuple
 from .Data import Data, DataUnit
 from .ApplyToDataUnit import ApplyToDataUnit
 
@@ -21,7 +22,7 @@ class Node:
     def __str__(self) -> str:
         return self.name
 
-    def fit(self, x: DataUnit, y: DataUnit) -> (DataUnit, DataUnit):
+    def fit(self, x: DataUnit, y: DataUnit) -> Tuple[DataUnit, DataUnit]:
         return x, y
 
     def predict_forward(self, x : DataUnit) -> DataUnit:
@@ -51,7 +52,7 @@ class Operator(Node):
     def y_backward(self, y_frwd: Data) -> Data:
         return y_frwd
 
-    def fit(self, x: DataUnit, y: DataUnit) -> (DataUnit, DataUnit):
+    def fit(self, x: DataUnit, y: DataUnit) -> Tuple[DataUnit, DataUnit]:
         x_frwd = self.x_forward(x)
         y_frwd = self.y_forward(y, x, x_frwd)
         return x_frwd, y_frwd

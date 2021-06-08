@@ -5,7 +5,7 @@ from ..core import DataUnit, DataLayer
 
 
 class Folder:
-    def __init__(self, n_folds=5, seed=None):
+    def __init__(self, n_folds: int = 5, seed: int = 4242):
         self.n_folds = n_folds
         self.seed = seed
         self.folds = None

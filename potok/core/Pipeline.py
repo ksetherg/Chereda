@@ -1,4 +1,4 @@
-import copy
+# import copy
 
 from .Node import Node, Operator
 from .Layer import Layer

@@ -1,4 +1,4 @@
-import ray
+# import ray
 
 from .Node import Node
 from .Data import Data, DataUnit, DataLayer
@@ -27,7 +27,7 @@ class Layer(Node):
     def predict_forward(self, x):
         assert len(self.layer) == len(x), 'Layer and data shapes must be same.'        
         res = [node.predict_forward(xx) for node, xx in zip(self.layer, x)]
-        result1d = DataLayer(*self._flatten_forward_(result))
+        result1d = DataLayer(*self._flatten_forward_(res))
         return result1d
     
     def predict_backward(self, y):

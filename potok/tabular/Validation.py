@@ -1,3 +1,4 @@
+from typing import Tuple
 from ..core import Operator, DataLayer, DataUnit
 
 
@@ -23,7 +24,7 @@ class Validation(Operator):
         y = y.reindex(self.index)
         return y
         
-    def fit(self, x: DataUnit, y: DataUnit) -> (DataLayer, DataLayer):
+    def fit(self, x: DataUnit, y: DataUnit) -> Tuple[DataLayer, DataLayer]:
         self.folder.generate_folds(x, y)
         self.index = y.index
         x_frwd = self.x_forward(x)
