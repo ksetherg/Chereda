@@ -5,6 +5,8 @@ from ..core import ApplyToDataUnit
 import copy
 from typing import List, Iterator, Tuple
 import numpy as np
+from tqdm import tqdm
+import gc
 
 
 class AlbAugment(Node):
@@ -41,21 +43,21 @@ class AlbAugment(Node):
                 assert len(args) == 2, 'Not enough arguments.'
                 X, y = args
                 imgs, msks = [], []
-                for img, msk in zip(X.data, y.data):
+                for img, msk in tqdm(zip(X.data, y.data)):
                     augmented = augmentations(image=img, mask=msk)
                     imgs.append(augmented['image'])
                     msks.append(augmented['mask'])
-                return X.copy(np.asarray(imgs)), y.copy(np.asarray(masks))
+                return X.copy(data=np.asarray(imgs)), y.copy(data=np.asarray(msks))
             else:
                 X = args[0]
                 imgs = []
-                for img in X.data:
+                for img in tqdm(X.data):
                     augmented = augmentations(image=img)
                     imgs.append(augmented['image'])
 
                 if len(args) == 1:
-                    return X.copy(np.asarray(imgs))
+                    return X.copy(data=np.asarray(imgs))
                 elif len(args) == 2:
-                    return X.copy(np.asarray(imgs)), args[1]
+                    return X.copy(data=np.asarray(imgs)), args[1]
         else:
             return args

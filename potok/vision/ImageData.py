@@ -60,7 +60,7 @@ class ImageClassificationData(Data):
 
     def _preprocess_(self, x: list) -> list:
         prep_x = []
-        for i, img in enumerate(x):
+        for i, img in tqdm(enumerate(x)):
             img_new = self.preprocessor(img)
             if img_new is not None:
                 prep_x.append(img_new)
@@ -69,22 +69,22 @@ class ImageClassificationData(Data):
         return prep_x
 
     def _load_(self) -> list:
-        print('Loading images...')
+        print('Loading imgs...')
         imgs = []
         for path in tqdm(self.df['img_path']): 
             img = cv2.imread(path)
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             imgs.append(img)
+        if self.preprocessor is not None:
+            imgs = self._preprocess_(imgs)
         return imgs
     
     @property
     def X(self) -> Data:
         imgs = self.data
         if imgs is None:
-            imgs = self._load_()
-        if self.preprocessor is not None:
-            imgs = self._preprocess_(imgs)
-        X = self.copy(data=np.asarray(imgs))
+            imgs = np.asarray(self._load_())
+        X = self.copy(data=imgs)
         return X
 
     @property
