@@ -39,7 +39,7 @@ class Dkl(Operator):
         data_new = data.copy(data=df_with_weights)
         return data_new
 
-    def y_forward(self, y: DataUnit, x: DataUnit, x_frwd: DataUnit) -> DataUnit:
+    def y_forward(self, y: DataUnit, x: DataUnit = None, x_frwd: DataUnit = None) -> DataUnit:
         y_train_new = None
         if y['train'] is not None:
             y_train_new = self.apply_to_member(y['train'], self.train_weights)
@@ -69,7 +69,7 @@ class Dkl(Operator):
         if not isinstance(x, DataUnit):
             raise Exception(f'Error: Dkl only works with DataUnit, not with {x.__class__.__name__}')
         self.calc_weights(x['train'].data, x['test'].data)
-        y_frwd = self.y_forward(y, x, None)
+        y_frwd = self.y_forward(y)
         return x, y_frwd
 
     def predict_forward(self, x: DataUnit) -> DataUnit:

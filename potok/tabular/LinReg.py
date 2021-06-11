@@ -27,7 +27,7 @@ class LinReg(Node):
         return x2
 
     @ApplyToDataUnit()
-    def y_forward(self, y: Data, x: Data, x_frwd: Data) -> Data:
+    def y_forward(self, y: Data, x: Data = None, x_frwd: Data = None) -> Data:
         y2 = y.data
         y2 = y2.dropna()
         return y2
@@ -47,7 +47,7 @@ class LinReg(Node):
             self.features = x['train'].data.columns
 
         x_frwd = self.x_forward(x)
-        y_frwd = self.y_forward(y, x, x_frwd)
+        y_frwd = self.y_forward(y)
 
         x_frwd = x_frwd.reindex(y_frwd.index)
     
@@ -65,11 +65,11 @@ class LinReg(Node):
         print(f'X_train = {x_train.shape} y_train = {y_train.shape}')
 
         self.model = LinearRegression().fit(x_train, y_train, sample_weight=w_train)
-        y2 = self.predict_forward(x)
-        return x, y2
+        # y2 = self.predict_forward(x)
+        return x, y
 
     @ApplyToDataUnit()
-    def predict_forward(self, x : DataUnit) -> DataUnit:
+    def predict_forward(self, x : Data) -> Data:
         assert self.model is not None, 'Fit model before.'
         x = x.data[self.features]
         # prediction = self.model.predict(exog=X)

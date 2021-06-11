@@ -13,7 +13,7 @@ class Validation(Operator):
         x2 = self.folder.get_folds(x)
         return x2
 
-    def y_forward(self, y: DataUnit, x: DataUnit, x_frwd: DataUnit) -> DataLayer:
+    def y_forward(self, y: DataUnit, x: DataUnit = None, x_frwd: DataUnit = None) -> DataLayer:
         y2 = self.folder.get_folds(y)
         return y2
 
@@ -28,7 +28,7 @@ class Validation(Operator):
         self.folder.generate_folds(x, y)
         self.index = y.index
         x_frwd = self.x_forward(x)
-        y_frwd = self.y_forward(y, x, x_frwd)
+        y_frwd = self.y_forward(y)
         return x_frwd, y_frwd
 
     def predict_forward(self, x: DataUnit) -> DataLayer:

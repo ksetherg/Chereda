@@ -30,11 +30,14 @@ class ApplyToDataUnit:
             units.remove('train')
 
         args2 = [[arg[unit] for arg in args] for unit in units]
+        kwargs2 = {unit: {k: v[unit] for k, v in kwargs.items()} for unit in units}
+        # print(kwargs2)
+
         
         if self.backend == 'ray':
-            res = self.apply_with_ray(wrapped, instance, *args2, **kwargs)
+            res = self.apply_with_ray(wrapped, instance, *args2, **kwargs2)
         elif self.backend == 'map':
-            res = self.apply_with_map(wrapped, instance, *args2, **kwargs)
+            res = self.apply_with_map(wrapped, instance, *args2, **kwargs2)
         
         """Must return separately"""
         if isinstance(res[0], tuple):
@@ -49,8 +52,10 @@ class ApplyToDataUnit:
     
     def apply_with_ray(self, wrapped, instance, *args, **kwargs):
         state = ray.put(instance)
-        res = [ray.remote(wrapped.__func__).remote(state, *arg, **kwargs) for arg in args]
+        res = [ray.remote(wrapped.__func__).remote(state, *arg, **kwarg) for arg, kwarg in zip(args, kwargs.values())]
         return ray.get(res)
     
     def apply_with_map(self, wrapped, instance, *args, **kwargs):
-        return list(starmap(partial(wrapped, **kwargs), args))
+        return [wrapped(*arg, **kwarg) for arg, kwarg in zip(args, kwargs.values())]
+
+        # list(starmap(wrapped, args))

@@ -45,7 +45,7 @@ class Operator(Node):
         return x
 
     @ApplyToDataUnit()
-    def y_forward(self, y: Data, x: Data, x_frwd: Data) -> Data:
+    def y_forward(self, y: Data, x: Data = None, x_frwd: Data = None) -> Data:
         return y
 
     @ApplyToDataUnit()

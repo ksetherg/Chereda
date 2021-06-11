@@ -2,7 +2,7 @@
 
 from .Node import Node, Operator
 from .Layer import Layer
-
+import gc
 
 class Pipeline(Node):
     """Pipeline works with DataLayer and Layer"""
@@ -33,6 +33,7 @@ class Pipeline(Node):
             assert len(x) == len(y)
             layer = self.next_layer(node, len(x))
             x, y = layer.fit(x, y)
+            gc.collect()
             layers.append(layer)
         self.layers = layers
         return x, y
@@ -70,15 +71,16 @@ class Pipeline(Node):
         for layer in self.layers[::-1]:
             y = layer.predict_backward(y)
         return y
-    
-    def fit_predict(self, x, y):
-        x2, y2 = self.fit(x, y)
+
+    def predict(self, x):
+        y2 = self.predict_forward(x)
         y1 = self.predict_backward(y2)
         return y1
 
-    def predict(self, x):
-        x2 = self.predict_forward(x)
-        y1 = self.predict_backward(x2)
+    def fit_predict(self, x, y):
+        # x2, y2 = self.fit(x, y)
+        _, _ = self.fit(x, y)
+        y1 = self.predict(x)
         return y1
     
     def __str__(self):

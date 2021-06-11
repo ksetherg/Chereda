@@ -10,7 +10,7 @@ class Folder:
         self.seed = seed
         self.folds = None
 
-    def generate_folds(self, x: DataUnit, y: DataUnit):
+    def generate_folds(self, x: DataUnit, y: DataUnit) -> None:
         indx = x.index['train']
         folder = KFold(n_splits=self.n_folds, shuffle=True, random_state=self.seed)
         folds = DataLayer(*[DataUnit(train, valid) for train, valid in folder.split(indx)])

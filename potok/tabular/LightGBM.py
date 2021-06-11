@@ -1,5 +1,6 @@
 import lightgbm as lgb
 import pandas as pd
+from typing import List, Iterator, Tuple
 
 from ..core import Operator, ApplyToDataUnit, DataUnit, Data
 from .TabularData import TabularData
@@ -51,7 +52,7 @@ class LightGBM(Operator):
         return x2
 
     @ApplyToDataUnit()
-    def y_forward(self, y: Data, x: Data, x_frwd: Data) -> Data:
+    def y_forward(self, y: Data, x: Data = None, x_frwd: Data = None) -> Data:
         y2 = y.data
         y2 = y2.dropna()
         return y2
@@ -61,7 +62,7 @@ class LightGBM(Operator):
         y = TabularData(data=y_frwd, target=self.target)
         return y
 
-    def fit(self, x: DataUnit, y: DataUnit) -> DataUnit:
+    def fit(self, x: DataUnit, y: DataUnit) -> Tuple[DataUnit, DataUnit]:
         self._set_model()
 
         self.index = y.index
@@ -73,7 +74,7 @@ class LightGBM(Operator):
             self.features = x['train'].data.columns
 
         x_frwd = self.x_forward(x)
-        y_frwd = self.y_forward(y, x, x_frwd)
+        y_frwd = self.y_forward(y)
 
         x_frwd = x_frwd.reindex(y_frwd.index)
 
@@ -104,11 +105,11 @@ class LightGBM(Operator):
                                     **self.training_params)
 
         self._make_feature_importance_df_()
-        y2 = self.predict_forward(x)
-        return x, y2
+        # y2 = self.predict_forward(x)
+        return x, y
 
     @ApplyToDataUnit(mode='efficient')
-    def predict_forward(self, x : DataUnit) -> DataUnit:
+    def predict_forward(self, x : Data) -> Data:
         assert self.model is not None, 'Fit model before.'
         x = x.data[self.features]
         if self.mode == 'Classifier':
