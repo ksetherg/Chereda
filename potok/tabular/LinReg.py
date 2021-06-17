@@ -20,16 +20,6 @@ class LinReg(Node):
 
         self.model = None
         self.index = None
-
-    @ApplyToDataUnit()
-    def x_forward(self, x: Data) -> Data:
-        assert self.model is not None, 'Fit model before or load from file.'
-        x = x.data[self.features]
-        # prediction = self.model.predict(exog=X)
-        prediction = self.model.predict(x)
-        prediction = pd.DataFrame(prediction, index=x.index, columns=self.target)
-        y = TabularData(data=prediction, target=self.target)
-        return y
     
     def _fit_(self, x: DataUnit, y: DataUnit) -> Tuple[DataUnit, DataUnit]:
         if self.target is None:
@@ -40,7 +30,7 @@ class LinReg(Node):
     
         x_train = x['train'].data[self.features]
         y_train = y['train'].data.dropna()[self.target]
-        x_train = x_train.reindex(y_train)
+        x_train = x_train.reindex(y_train.index)
 
         if self.weight is not None:
             w_train = y['train'].data.dropna()[self.weight]
@@ -57,5 +47,15 @@ class LinReg(Node):
 
     def fit(self, x: DataUnit, y: DataUnit) -> Tuple[DataUnit, DataUnit]:
         self._fit_(x, y)
-        y_frwd = self.x_forward(x)
+        y_frwd = self.predict_forward(x)
         return x, y_frwd
+
+    @ApplyToDataUnit()
+    def predict_forward(self, x: Data) -> Data:
+        assert self.model is not None, 'Fit model before or load from file.'
+        x_new = x.data[self.features]
+        # prediction = self.model.predict(exog=X)
+        prediction = self.model.predict(x_new)
+        prediction = pd.DataFrame(prediction, index=x.index, columns=[self.target])
+        y = TabularData(data=prediction, target=self.target)
+        return y

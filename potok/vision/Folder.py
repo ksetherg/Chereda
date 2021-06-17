@@ -10,7 +10,7 @@ class StratifiedImageFolder(Folder):
         super().__init__(n_folds=n_folds, seed=seed)
         self.split_ratio = split_ratio
 
-    def generate_folds(self, x: DataUnit, y: DataUnit):
+    def _fit_(self, x: DataUnit, y: DataUnit) -> None:
         indx = x.index['train']
         strats = y.Y['train']
         train_idx, valid_idx = train_test_split(indx,
@@ -20,3 +20,4 @@ class StratifiedImageFolder(Folder):
                                                 stratify=strats)
         folds = DataLayer(*[DataUnit(train_idx, valid_idx)])
         self.folds = folds
+        return None

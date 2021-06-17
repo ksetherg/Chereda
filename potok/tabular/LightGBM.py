@@ -2,11 +2,11 @@ import lightgbm as lgb
 import pandas as pd
 from typing import List, Iterator, Tuple
 
-from ..core import Operator, ApplyToDataUnit, DataUnit, Data
+from ..core import Node, ApplyToDataUnit, DataUnit, Data
 from .TabularData import TabularData
 
 
-class LightGBM(Operator):
+class LightGBM(Node):
     def __init__(self,
                  target=None,
                  features=None,
@@ -27,13 +27,13 @@ class LightGBM(Operator):
         self.weight = weight
 
         self.model_params = dict(
-            n_estimators=200,
+            n_estimators=2000,
             learning_rate=0.1,
             num_class = num_class,
             objective=objective,
             # class_weight='balanced',
             importance_type='split',
-            n_jobs=4,
+            n_jobs=-1,
         )
 
         self.training_params = dict(
@@ -46,26 +46,6 @@ class LightGBM(Operator):
         self.cat_features_idx = None
         self.feature_importance_df = None
 
-    @ApplyToDataUnit(mode='efficient')
-    def x_forward(self, x: Data) -> Data:
-        assert self.model is not None, 'Fit model before or load from file.'
-        x = x.data[self.features]
-        if self.mode == 'Classifier':
-            prediction = self.model.predict_proba(x)
-            prediction = pd.DataFrame(prediction, index=x.index)
-        elif self.mode == 'Regressor':
-            prediction = self.model.predict(x)
-            prediction = pd.DataFrame(prediction, index=x.index, columns=[self.target])
-        y = TabularData(data=prediction, target=self.target)
-        return y
-
-    @ApplyToDataUnit()
-    def y_forward(self, y: Data, x: Data = None, x_frwd: Data = None) -> Data:
-        return y
-
-    @ApplyToDataUnit()
-    def y_backward(self, y_frwd: Data) -> Data:
-        return y_frwd
 
     def _fit_(self, x: DataUnit, y: DataUnit) -> Tuple[DataUnit, DataUnit]:
         self._set_model_()
@@ -77,8 +57,8 @@ class LightGBM(Operator):
             self.features = x['train'].data.columns
 
         x_train, x_valid = x['train'].data[self.features], x['valid'].data[self.features]
-        y_train, y_valid = y['train'].data.dropna()[self.target], y.data['valid'][self.target]
-        x_train = x_train.reindex(y_train)
+        y_train, y_valid = y['train'].data.dropna()[self.target], y['valid'].data[self.target]
+        x_train = x_train.reindex(y_train.index)
 
         if self.weight is not None:
             w_train, w_valid = y['train'].data.dropna()[self.weight], y['valid'].data[self.weight]
@@ -108,8 +88,21 @@ class LightGBM(Operator):
 
     def fit(self, x: DataUnit, y: DataUnit) -> Tuple[DataUnit, DataUnit]:
         self._fit_(x, y)
-        y_frwd = self.x_forward(x)
+        y_frwd = self.predict_forward(x)
         return x, y_frwd
+
+    @ApplyToDataUnit(mode='efficient')
+    def predict_forward(self, x : Data) -> Data:
+        assert self.model is not None, 'Fit model before or load from file.'
+        x_new = x.data[self.features]
+        if self.mode == 'Classifier':
+            prediction = self.model.predict_proba(x_new)
+            prediction = pd.DataFrame(prediction, index=x.index)
+        elif self.mode == 'Regressor':
+            prediction = self.model.predict(x_new)
+            prediction = pd.DataFrame(prediction, index=x.index, columns=[self.target])
+        y = TabularData(data=prediction, target=self.target)
+        return y
     
     def _set_cat_features_(self, features):
         cat_features_idx = []
