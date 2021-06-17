@@ -12,7 +12,7 @@ class Folder(Operator):
         self.folds = None
 
     def _fit_(self, x: DataUnit, y: DataUnit) -> None:
-        indx = x.index['train']
+        indx = x['train'].index
         folder = KFold(n_splits=self.n_folds, shuffle=True, random_state=self.seed)
         folds = DataLayer(*[DataUnit(train, valid) for train, valid in folder.split(indx)])
         self.folds = folds
@@ -32,7 +32,10 @@ class Folder(Operator):
 
     def get_folds(self, xy: DataUnit) -> DataLayer:
         assert xy['valid'] is None, 'Currnetly Double Validation is not allowed.'
-        valid_xy =  DataUnit(train=xy['train'], valid=xy['train'])
-        folds = [valid_xy.get_by_index(indx) for indx in self.folds] 
-        folds = [fold.copy(**{'test': xy['test']}) for fold in folds] 
+        if xy['train'] is not None:
+            valid_xy =  DataUnit(train=xy['train'], valid=xy['train'])
+            folds = [valid_xy.get_by_index(indx) for indx in self.folds]
+            folds = [fold.copy(**{'test': xy['test']}) for fold in folds]
+        else:
+            folds = [xy]
         return DataLayer(*folds)

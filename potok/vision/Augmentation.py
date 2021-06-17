@@ -24,15 +24,7 @@ class AlbAugment(Node):
         y_aug = copy.copy(y.Y)
         x_aug, y_aug = self.augment(x_aug, y_aug, augs=self.augmentations)
         return x_aug, y_aug
-
-    def predict_forward(self, x : DataUnit) -> DataUnit:
-        x_aug = copy.copy(x.X)
-        x_aug = self.augment(x_aug, augs=self.augmentations)
-        return x_aug
     
-    def predict_backward(self, y_frwd: DataUnit) -> DataUnit:
-        return y_frwd
-
     @ApplyToDataUnit()
     def augment(self, *args, **kwargs):
         assert len(args) != 0, 'Not enough arguments.'

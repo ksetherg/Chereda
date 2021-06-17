@@ -1,63 +1,62 @@
 from typing import List, Iterator, Tuple
 import torch
 import torch.nn.functional as F
+import numpy as np
 import gc
 from time import gmtime, strftime
 
-from ..core import Operator, ApplyToDataUnit, DataUnit, Data
+from ..core import Node, ApplyToDataUnit, DataUnit, Data
 
 
-class NNModel(Operator):
-    def __init__(self, archtr,
+class NNModel(Node):
+    def __init__(self, model,
                  optimizer,
                  loss_func,
                  **kwargs) -> None:
         super().__init__(**kwargs)
-        self.archtr = archtr
+        self.model = model
         self.optimizer = optimizer
         self.loss_func = loss_func
 
         self.train_loss_error = None
             
-    def x_forward(self, x: Data) -> Data:
-        x = torch.from_numpy(x.data)
-        x = torch.swapaxes(x, -1, 1)
-        x_frwd = x.to(torch.device("cuda"), dtype=torch.float32)
-        return x_frwd
+    def transform_x(self, x: Data) -> Data:
+        x_new = np.swapaxes(x.data, -1, 1)
+        x_new = torch.from_numpy(x_new)
+        x_new = x_new.to(torch.device("cuda"), dtype=torch.float32)
+        return x_new
 
-    def y_forward(self, y: Data, x: Data = None, x_frwd: Data = None) -> Data:
-        y = torch.from_numpy(y.data)
-        y_frwd = y.to(torch.device("cuda"), dtype=torch.long)
-        return y_frwd
-
-    def y_backward(self, y_frwd: Data) -> Data:
-        return y_frwd
-
+    def transform_y(self, y: Data, x: Data = None, x_frwd: Data = None) -> Data:
+        y_new = torch.from_numpy(y.data)
+        y_new = y_new.to(torch.device("cuda"), dtype=torch.long)
+        return y_new
+    
     def fit(self, x: Data, y: Data) -> Tuple[Data, Data]:
-        self.archtr.train()
-        x_frwd = self.x_forward(x)
-        y_frwd = self.y_forward(y)
+        self.model.train()
+
+        x_new = self.transform_x(x)
+        y_new = self.transform_y(y)
         
         self.optimizer.zero_grad()
-        y_pred = self.archtr(x_frwd)
-        loss = self.loss_func(y_pred, y_frwd)
+        y_pred = self.model(x_new)
+        loss = self.loss_func(y_pred, y_new)
         loss.backward()
         self.optimizer.step()
-        self.train_loss_error = loss.item()
+        with torch.no_grad():
+            logits = F.log_softmax(y_pred, dim=1)
+        y_frwd = y.copy(data=logits.cpu().numpy())
         gc.collect()
-        return x, y
+        return x, y_frwd
 
     def predict_forward(self, x : Data) -> Data:
-        x_frwd = self.x_forward(x)
-        self.archtr.eval()
+        x_frwd = self.transform_x(x)
+        self.model.eval()
         with torch.no_grad():
-            y_pred = self.archtr(x_frwd)
+            y_pred = self.model(x_frwd)
             logits = F.log_softmax(y_pred, dim=1)
-        return logits
-
-    def predict_backward(self, y_frwd: DataUnit) -> DataUnit:
-        y = self.y_backward(y_frwd)
-        return y
+        pred = x.copy(data=logits.cpu().numpy())
+        gc.collect()
+        return pred
 
     def get_error(self, y_pred, y_true):
         y_frwd = self.y_forward(y_true)
@@ -70,7 +69,6 @@ class NNModel(Operator):
         suffix = strftime("%y_%m_%d_%H_%M_%S", gmtime())
         ext = '.pth'
         path = prefix + file_name + '_' + suffix + ext
-        
         torch.save({
                     'epoch': epoch,
                     'model_state_dict': self.model.state_dict(),
@@ -78,3 +76,11 @@ class NNModel(Operator):
                     'loss': loss,
                     },
                     path)
+
+    def _load_(self, file_name):
+        prefix = 'models/'
+        ext = '.pth'
+        path =  prefix + file_name + ext
+        checkpoint = torch.load(path)
+        self.model.load_state_dict(checkpoint['model_state_dict'])
+        self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])

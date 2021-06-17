@@ -5,7 +5,6 @@ from ..core import Operator, DataLayer, DataUnit
 class Validation(Operator):
     def __init__(self, folder, **kwargs):
         super().__init__(**kwargs)
-        # may be it's better to merge the logic of Folder and Validation
         self.folder = folder
         self.index = None
 
@@ -19,13 +18,12 @@ class Validation(Operator):
 
     def y_backward(self, y_frwd: DataLayer) -> DataUnit:
         y = self.folder.y_backward(y_frwd)
-        assert y['valid'] is not None, 'Validation is None.'
         y = DataUnit(train=y['valid'], test=y['test'])
-        y = y.reindex(self.index)
+        # y = y.reindex(self.index)
         return y
     
     def _fit_(self, x: DataUnit, y: DataUnit) -> None:
         print('Fitting with Validation')
-        self.folder._fit_(x, y)
         self.index = y.index
+        self.folder._fit_(x, y)
         return None

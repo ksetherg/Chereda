@@ -19,15 +19,19 @@ class ImageClassificationData(Data):
                  data: list = None,
                  path: str = None,
                  target_map: dict = None,
-                 preprocessor: Any = None):
+                 preprocessor: object = None):
         
         self.df = df
         self.data = data
 
-        self.preprocessor = preprocessor
         if df is None:
             assert path is not None, 'Path to image dir is required.'
             self.__post_init__(Path(path), target_map)
+        
+        if preprocessor is not None and data is None:
+            self.data = np.asarray(self._preprocess_(self._load_(), preprocessor))
+        elif preprocessor is not None and data is not None:
+            self.data = np.asarray(self._preprocess_(data, preprocessor))
 
     def __post_init__(self, path, target_map):
         imgs = list(path.glob('**/*.jpg'))
@@ -58,14 +62,15 @@ class ImageClassificationData(Data):
         target = chunk['target']
         return img, target
 
-    def _preprocess_(self, x: list) -> list:
+    def _preprocess_(self, x: list, preprocessor: object) -> list:
         prep_x = []
-        for i, img in tqdm(enumerate(x)):
-            img_new = self.preprocessor(img)
+        for i, img in enumerate(tqdm(x)):
+            img_new = preprocessor(img)
             if img_new is not None:
                 prep_x.append(img_new)
             else:
-                self.df.iloc[i, 1] = -1
+                # self.df.drop(self.df.index[[i]])
+                self.df.iloc[i, 1] = np.nan
         return prep_x
 
     def _load_(self) -> list:
@@ -75,8 +80,6 @@ class ImageClassificationData(Data):
             img = cv2.imread(path)
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             imgs.append(img)
-        if self.preprocessor is not None:
-            imgs = self._preprocess_(imgs)
         return imgs
     
     @property
@@ -90,20 +93,20 @@ class ImageClassificationData(Data):
     @property
     def Y(self) -> Data:
         target = self.df['target'].to_numpy()
+        # target = target[~np.isnan(target)]
         y = self.copy(data=target)
         return y
 
     @property
     def index(self) -> np.ndarray:
-        return self.df.index
+        return self.df.index.to_numpy()
 
     def get_by_index(self, index) -> Data:
         chunk = self.df.iloc[index]
+        batch = None
         if self.data is not None:
             batch = self.data[index]
-            new = self.copy(df=chunk, data=batch)
-        else:
-            new = self.copy(df=chunk)
+        new = self.copy(df=chunk, data=batch)
         return new
 
     def reindex(self, index) -> Data:
@@ -112,12 +115,15 @@ class ImageClassificationData(Data):
         return new
 
     @classmethod
-    def combine(cls, datas: List[pd.DataFrame]) -> Data:
+    def combine(cls, datas: List[Data]) -> Data:
         dfs = [data.df for data in datas]
         dfs = [df.set_index('img_path', append=True) for df in dfs]
         df_cmbn = pd.concat(dfs, axis=1, keys=range(len(dfs)))
         df_cmbn = df_cmbn.groupby(level=[1], axis=1).mean()
         df_cmbn = df_cmbn.reset_index(level=1)
-        new = datas[0].copy(df=df_cmbn)
+
+        datas_list = [data.data for data in datas]
+        data_cmbn = np.concatenate(datas_list)
+        new = datas[0].copy(df=df_cmbn, data=data_cmbn)
         return new
         

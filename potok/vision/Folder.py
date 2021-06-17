@@ -11,8 +11,8 @@ class StratifiedImageFolder(Folder):
         self.split_ratio = split_ratio
 
     def _fit_(self, x: DataUnit, y: DataUnit) -> None:
-        indx = x.index['train']
-        strats = y.Y['train']
+        indx = x['train'].index
+        strats = y['train'].Y.data
         train_idx, valid_idx = train_test_split(indx,
                                                 test_size=self.split_ratio, 
                                                 random_state=self.seed, 
