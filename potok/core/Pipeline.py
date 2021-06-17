@@ -87,7 +87,7 @@ class Pipeline(Node):
 
     def fit_predict(self, x, y):
         x2, y2 = self.fit(x, y)
-        y1 = self.predict(x)
+        y1 = self.predict_backward(y2)
         return y1
     
     def __str__(self):

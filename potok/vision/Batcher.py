@@ -5,6 +5,7 @@ from typing import List, Iterator, Tuple
 import torch
 import torch.nn.functional as F
 from tqdm import tqdm
+import gc
 
 
 class Batcher(Node):
@@ -23,6 +24,7 @@ class Batcher(Node):
         return batch_sampler
 
     def fit(self, x: DataUnit, y: DataUnit) -> Tuple[DataUnit, DataUnit]:
+        print('Training on batchs...')
         x_train, x_valid = x['train'], x['valid']
         y_train, y_valid = y['train'], y['valid']
         
@@ -44,7 +46,7 @@ class Batcher(Node):
 
         self.train_error = torch.mean(torch.FloatTensor(train_errors))
         self.valid_error = torch.mean(torch.FloatTensor(valid_errors))
-
+        gc.collect()
         return x, y
 
     def predict_forward(self, x : DataUnit) -> DataUnit:

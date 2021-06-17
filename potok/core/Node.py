@@ -52,7 +52,11 @@ class Operator(Node):
     def y_backward(self, y_frwd: Data) -> Data:
         return y_frwd
 
+    def _fit_(self, x: DataUnit, y: DataUnit) -> None:
+        return None
+
     def fit(self, x: DataUnit, y: DataUnit) -> Tuple[DataUnit, DataUnit]:
+        self._fit_(x, y)
         x_frwd = self.x_forward(x)
         y_frwd = self.y_forward(y, x, x_frwd)
         return x_frwd, y_frwd

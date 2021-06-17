@@ -65,20 +65,12 @@ class Dkl(Operator):
     #     '''Probably it should remove Weight column'''
     #     return y_frwd
 
-    def fit(self, x: DataUnit, y: DataUnit) -> Tuple[DataUnit, DataUnit]:
+    def _fit_(self, x: DataUnit, y: DataUnit) -> None:
         if not isinstance(x, DataUnit):
             raise Exception(f'Error: Dkl only works with DataUnit, not with {x.__class__.__name__}')
         self.calc_weights(x['train'].data, x['test'].data)
-        y_frwd = self.y_forward(y)
-        return x, y_frwd
+        return None
 
-    def predict_forward(self, x: DataUnit) -> DataUnit:
-        return x
-
-    def predict_backward(self, y_frwd: DataUnit) -> DataUnit:
-        # y = self.y_backward(y_frwd)
-        return y_frwd
-        
     @staticmethod
     def scale_data(data, mu, sigma):
         scaled = (data - mu) / sigma 

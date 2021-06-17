@@ -31,9 +31,7 @@ class ApplyToDataUnit:
 
         args2 = [[arg[unit] for arg in args] for unit in units]
         kwargs2 = {unit: {k: v[unit] for k, v in kwargs.items()} for unit in units}
-        # print(kwargs2)
 
-        
         if self.backend == 'ray':
             res = self.apply_with_ray(wrapped, instance, *args2, **kwargs2)
         elif self.backend == 'map':
@@ -57,5 +55,3 @@ class ApplyToDataUnit:
     
     def apply_with_map(self, wrapped, instance, *args, **kwargs):
         return [wrapped(*arg, **kwarg) for arg, kwarg in zip(args, kwargs.values())]
-
-        # list(starmap(wrapped, args))
