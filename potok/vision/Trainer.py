@@ -1,5 +1,11 @@
 from typing import List, Iterator, Tuple
-from ..core import Node, ApplyToDataUnit, DataUnit, Data
+from torch.utils.tensorboard import SummaryWriter
+import torch.nn.functional as F
+import torch
+from time import gmtime, strftime
+
+
+from ..core import Node, ApplyToDataUnit, DataUnit, Data, DataLayer
 
 
 # class Trainer(Operator):
@@ -108,10 +114,18 @@ class Trainer(Node):
         self.epochs = epochs
 
     def fit(self, x: DataUnit, y: DataUnit) -> Tuple[DataUnit, DataUnit]:
+        path_to_tb = './logs' + '/run_' + strftime("%y_%m_%d_%H_%M_%S", gmtime())   
+        writer = SummaryWriter(path_to_tb)
+
         x, y = x.X, y.Y
         for e in range(self.epochs):
             print(f'Training Epoch: {e+1}/{self.epochs}')
             x2, y2 = self.model.fit(x, y)
+            '''y2 is datalayer'''
+            error = self.get_error(y2.args[0], y)
+            print('train_loss=', error['train'], 'valid_loss=', error['valid'])
+            writer.add_scalars('Loss', {'train': error['train'],
+                                        'valid': error['valid']}, e)
         return x2, y2
 
     def predict_forward(self, x : DataUnit) -> DataUnit:
@@ -121,3 +135,15 @@ class Trainer(Node):
     def predict_backward(self, y_frwd: DataUnit) -> DataUnit:
         y = self.model.predict_backward(y_frwd)
         return y
+
+    def transform_y(self, y: Data) -> Data:
+        y_new = torch.from_numpy(y.data)
+        return y_new
+
+    @ApplyToDataUnit()
+    def get_error(self, y_pred: DataUnit, y_true: DataUnit) -> DataUnit:
+        pred = torch.from_numpy(y_pred)
+        true = torch.from_numpy(y_true)
+        error = F.nll_loss(pred, true)
+        return error
+    

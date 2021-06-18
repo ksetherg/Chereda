@@ -26,7 +26,7 @@ class NNModel(Node):
         x_new = x_new.to(torch.device("cuda"), dtype=torch.float32)
         return x_new
 
-    def transform_y(self, y: Data, x: Data = None, x_frwd: Data = None) -> Data:
+    def transform_y(self, y: Data) -> Data:
         y_new = torch.from_numpy(y.data)
         y_new = y_new.to(torch.device("cuda"), dtype=torch.long)
         return y_new
@@ -57,11 +57,6 @@ class NNModel(Node):
         pred = x.copy(data=logits.cpu().numpy())
         gc.collect()
         return pred
-
-    def get_error(self, y_pred, y_true):
-        y_frwd = self.y_forward(y_true)
-        error = F.nll_loss(y_pred, y_frwd)
-        return error
 
     def _save_(self, epoch, loss):
         prefix = 'models/'

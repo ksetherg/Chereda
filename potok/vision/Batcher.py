@@ -18,8 +18,8 @@ class Batcher(Node):
         self.train_error = None
         self.valid_error = None
 
-    def batch_sampler(self, n, batch_size):
-        indx_sampler = RandomSampler(range(n))
+    def batch_sampler(self, indxs, batch_size):
+        indx_sampler = SubsetRandomSampler(indxs)
         batch_sampler = BatchSampler(indx_sampler, batch_size, drop_last=False)
         return batch_sampler
 
@@ -28,8 +28,8 @@ class Batcher(Node):
         x_train, x_valid = x['train'], x['valid']
         y_train = y['train']
         
-        train_btchs = self.batch_sampler(len(x_train), self.batch_size)
-        valid_btchs = self.batch_sampler(len(x_valid), self.batch_size)
+        train_btchs = self.batch_sampler(x_train.index, self.batch_size)
+        valid_btchs = self.batch_sampler(x_valid.index, self.batch_size)
 
         train = []
         valid = []
@@ -48,10 +48,13 @@ class Batcher(Node):
         gc.collect()
         return x, y_frwd
 
+    @ApplyToDataUnit(mode='efficient')
     def predict_forward(self, x : DataUnit) -> DataUnit:
-        x2 = ApplyToDataUnit()(self.model.predict_forward(x))
+        print('Batcher', type(x))
+        x2 = self.model.predict_forward(x)
         return x2
-    
+
+    @ApplyToDataUnit()
     def predict_backward(self, y_frwd: DataUnit) -> DataUnit:
-        y = ApplyToDataUnit()(self.model.predict_backward(y_frwd))
+        y = self.model.predict_backward(y_frwd)
         return y

@@ -70,7 +70,7 @@ class ImageClassificationData(Data):
                 prep_x.append(img_new)
             else:
                 # self.df.drop(self.df.index[[i]])
-                self.df.iloc[i, 1] = np.nan
+                self.df.iloc[i, 1] = -1
         return prep_x
 
     def _load_(self) -> list:
@@ -102,10 +102,11 @@ class ImageClassificationData(Data):
         return self.df.index.to_numpy()
 
     def get_by_index(self, index) -> Data:
-        chunk = self.df.iloc[index]
+        mask = self.df.index.isin(index)
+        chunk = self.df.loc[mask]
         batch = None
         if self.data is not None:
-            batch = self.data[index]
+            batch = self.data[mask]
         new = self.copy(df=chunk, data=batch)
         return new
 
