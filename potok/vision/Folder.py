@@ -16,7 +16,6 @@ class StratifiedImageFolder(Folder):
         train_idx, valid_idx = train_test_split(indx,
                                                 test_size=self.split_ratio, 
                                                 random_state=self.seed, 
-                                                shuffle=True,
                                                 stratify=strats)
         folds = DataLayer(*[DataUnit(train_idx, valid_idx)])
         self.folds = folds

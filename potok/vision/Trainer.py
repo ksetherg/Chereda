@@ -121,6 +121,7 @@ class Trainer(Node):
         for e in range(self.epochs):
             print(f'Training Epoch: {e+1}/{self.epochs}')
             x2, y2 = self.model.fit(x, y)
+            # print('XUY', all(y2.args[0]['valid'].Y.data == y['valid'].Y.data))
             '''y2 is datalayer'''
             error = self.get_error(y2.args[0], y)
             print('train_loss=', error['train'], 'valid_loss=', error['valid'])
@@ -136,14 +137,10 @@ class Trainer(Node):
         y = self.model.predict_backward(y_frwd)
         return y
 
-    def transform_y(self, y: Data) -> Data:
-        y_new = torch.from_numpy(y.data)
-        return y_new
-
     @ApplyToDataUnit()
     def get_error(self, y_pred: DataUnit, y_true: DataUnit) -> DataUnit:
-        pred = torch.from_numpy(y_pred)
-        true = torch.from_numpy(y_true)
+        pred = torch.from_numpy(y_pred.data)
+        true = torch.from_numpy(y_pred.Y.data)
         error = F.nll_loss(pred, true)
         return error
     

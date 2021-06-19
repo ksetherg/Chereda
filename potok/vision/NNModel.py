@@ -44,7 +44,7 @@ class NNModel(Node):
         self.optimizer.step()
         with torch.no_grad():
             logits = F.log_softmax(y_pred, dim=1)
-        y_frwd = y.copy(data=logits.cpu().numpy())
+            y_frwd = y.copy(data=logits.cpu().numpy())
         gc.collect()
         return x, y_frwd
 
@@ -54,7 +54,7 @@ class NNModel(Node):
         with torch.no_grad():
             y_pred = self.model(x_frwd)
             logits = F.log_softmax(y_pred, dim=1)
-        pred = x.copy(data=logits.cpu().numpy())
+            pred = x.copy(data=logits.cpu().numpy())
         gc.collect()
         return pred
 
@@ -79,3 +79,10 @@ class NNModel(Node):
         checkpoint = torch.load(path)
         self.model.load_state_dict(checkpoint['model_state_dict'])
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    
+    def get_error(self, y_pred, y_true):
+        pred = torch.from_numpy(y_pred.data)
+        true = torch.from_numpy(y_true.data)
+        error = F.nll_loss(pred, true)
+        return error
+    

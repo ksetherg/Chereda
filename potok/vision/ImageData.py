@@ -101,7 +101,7 @@ class ImageClassificationData(Data):
     def index(self) -> np.ndarray:
         return self.df.index.to_numpy()
 
-    def get_by_index(self, index) -> Data:
+    def get_by_index(self, index: list) -> Data:
         mask = self.df.index.isin(index)
         chunk = self.df.loc[mask]
         batch = None
@@ -110,21 +110,23 @@ class ImageClassificationData(Data):
         new = self.copy(df=chunk, data=batch)
         return new
 
-    def reindex(self, index) -> Data:
+    def reindex(self, index: list) -> Data:
+        if self.data is not None:
+            idx = self.df.index 
+            permute = [np.argwhere(idx == i)[0, 0] for i in index]
+            data = self.data[permute]
         df = self.df.reindex(index)
-        new = self.copy(df=df)
+        new = self.copy(df=df, data=data)
         return new
 
     @classmethod
     def combine(cls, datas: List[Data]) -> Data:
         dfs = [data.df for data in datas]
-        dfs = [df.set_index('img_path', append=True) for df in dfs]
-        df_cmbn = pd.concat(dfs, axis=1, keys=range(len(dfs)))
-        df_cmbn = df_cmbn.groupby(level=[1], axis=1).mean()
-        df_cmbn = df_cmbn.reset_index(level=1)
+        df_cmbn = pd.concat(dfs)
 
         datas_list = [data.data for data in datas]
         data_cmbn = np.concatenate(datas_list)
+        
         new = datas[0].copy(df=df_cmbn, data=data_cmbn)
         return new
         
