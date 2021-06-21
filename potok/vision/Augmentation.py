@@ -19,7 +19,6 @@ class AlbAugment(Node):
         self.apply_y = apply_y
     
     def fit(self, x: DataUnit, y: DataUnit) -> Tuple[DataUnit, DataUnit]:
-        print('Augmenting data...')
         x_aug = copy.copy(x.X)
         y_aug = copy.copy(y.Y)
         x_aug, y_aug = self.augment(x_aug, y_aug, augs=self.augmentations)
@@ -35,7 +34,7 @@ class AlbAugment(Node):
                 assert len(args) == 2, 'Not enough arguments.'
                 X, y = args
                 imgs, msks = [], []
-                for img, msk in tqdm(zip(X.data, y.data)):
+                for img, msk in tqdm(zip(X.data, y.data), total=len(X), desc='Augmenting'):
                     augmented = augmentations(image=img, mask=msk)
                     imgs.append(augmented['image'])
                     msks.append(augmented['mask'])
@@ -43,7 +42,7 @@ class AlbAugment(Node):
             else:
                 X = args[0]
                 imgs = []
-                for img in tqdm(X.data):
+                for img in tqdm(X.data, desc='Augmenting'):
                     augmented = augmentations(image=img)
                     imgs.append(augmented['image'])
 

@@ -164,7 +164,7 @@ class DataLayer(Data):
 
     def update(self, data: list):
         new = self.__dict__.update({'args': tuple(data)})
-        return
+        return new
 
     @property
     def units(self) -> list:

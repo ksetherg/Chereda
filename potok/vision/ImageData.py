@@ -74,9 +74,8 @@ class ImageClassificationData(Data):
         return prep_x
 
     def _load_(self) -> list:
-        print('Loading imgs...')
         imgs = []
-        for path in tqdm(self.df['img_path']): 
+        for path in tqdm(self.df['img_path'], desc='Loading imgs'): 
             img = cv2.imread(path)
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             imgs.append(img)

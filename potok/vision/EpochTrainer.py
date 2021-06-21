@@ -105,7 +105,7 @@ from ..core import Node, ApplyToDataUnit, DataUnit, Data, DataLayer
 #                                 drop_last=False)
 #         return data_loader
     
-class Trainer(Node):
+class EpochTrainer(Node):
     def __init__(self, model,
                     epochs,
                     **kwargs):
@@ -122,10 +122,10 @@ class Trainer(Node):
             print(f'Training Epoch: {e+1}/{self.epochs}')
             x2, y2 = self.model.fit(x, y)
             '''y2 is datalayer'''
-            error = self.get_error(y2.args[0], y)
-            print('train_loss=', error['train'], 'valid_loss=', error['valid'])
-            writer.add_scalars('Loss', {'train': error['train'],
-                                        'valid': error['valid']}, e)
+            # error = self.get_error(y2, y)
+            # print('train_loss=', error['train'], 'valid_loss=', error['valid'])
+            # writer.add_scalars('Loss', {'train': error['train'],
+            #                             'valid': error['valid']}, e)
         return x2, y2
 
     def predict_forward(self, x : DataUnit) -> DataUnit:

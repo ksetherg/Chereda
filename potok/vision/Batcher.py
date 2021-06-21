@@ -1,12 +1,7 @@
 from ..core import Node, Operator, ApplyToDataUnit, DataUnit, Data, DataLayer
 from .ImageData import ImageClassificationData
 
-from torch.utils.data import SubsetRandomSampler, BatchSampler, RandomSampler
-from typing import List, Iterator, Tuple
-import torch
-import torch.nn.functional as F
-from tqdm import tqdm
-import gc
+from torch.utils.data import SubsetRandomSampler, BatchSampler
 
 
 class Batcher(Operator):
