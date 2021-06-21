@@ -121,7 +121,6 @@ class Trainer(Node):
         for e in range(self.epochs):
             print(f'Training Epoch: {e+1}/{self.epochs}')
             x2, y2 = self.model.fit(x, y)
-            # print('XUY', all(y2.args[0]['valid'].Y.data == y['valid'].Y.data))
             '''y2 is datalayer'''
             error = self.get_error(y2.args[0], y)
             print('train_loss=', error['train'], 'valid_loss=', error['valid'])

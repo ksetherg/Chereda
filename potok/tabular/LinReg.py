@@ -51,7 +51,7 @@ class LinReg(Node):
         return x, y_frwd
 
     @ApplyToDataUnit()
-    def predict_forward(self, x: Data) -> Data:
+    def predict_forward(self, x: DataUnit) -> DataUnit:
         assert self.model is not None, 'Fit model before or load from file.'
         x_new = x.data[self.features]
         # prediction = self.model.predict(exog=X)

@@ -103,14 +103,15 @@ class ImageClassificationData(Data):
 
     def get_by_index(self, index: list) -> Data:
         mask = self.df.index.isin(index)
-        chunk = self.df.loc[mask]
         batch = None
         if self.data is not None:
             batch = self.data[mask]
+        chunk = self.df.loc[mask]
         new = self.copy(df=chunk, data=batch)
         return new
 
     def reindex(self, index: list) -> Data:
+        data = None
         if self.data is not None:
             idx = self.df.index 
             permute = [np.argwhere(idx == i)[0, 0] for i in index]
@@ -124,8 +125,10 @@ class ImageClassificationData(Data):
         dfs = [data.df for data in datas]
         df_cmbn = pd.concat(dfs)
 
+        data_cmbn = None
         datas_list = [data.data for data in datas]
-        data_cmbn = np.concatenate(datas_list)
+        if all(datas_list):
+            data_cmbn = np.concatenate(datas_list)
         
         new = datas[0].copy(df=df_cmbn, data=data_cmbn)
         return new
