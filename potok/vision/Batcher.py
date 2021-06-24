@@ -1,5 +1,4 @@
 from ..core import Node, Operator, ApplyToDataUnit, DataUnit, Data, DataLayer
-from .ImageData import ImageClassificationData
 
 from torch.utils.data import SubsetRandomSampler, BatchSampler
 
@@ -22,7 +21,8 @@ class Batcher(Operator):
         return y2
 
     def y_backward(self, y_frwd: DataUnit) -> DataUnit:
-        y = self.combine(y_frwd, self.index)
+        y = self.combine(y_frwd)
+        y = y.reindex(self.index)
         return y
 
     def _fit_(self, x: DataUnit, y: DataUnit = None) -> None:
@@ -51,9 +51,8 @@ class Batcher(Operator):
         return batched
 
     @ApplyToDataUnit()
-    def combine(self, datas: list, index: list):
-        combined = ImageClassificationData.combine(datas)
-        combined = combined.reindex(index)
+    def combine(self, datas: list):
+        combined = datas[0].__class__.combine(datas)
         return combined
 
         

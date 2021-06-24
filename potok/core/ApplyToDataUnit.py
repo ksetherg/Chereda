@@ -1,7 +1,7 @@
 from functools import partial
 from itertools import starmap
 import wrapt
-import ray
+# import ray
 
 from .Data import DataUnit
 
@@ -48,10 +48,10 @@ class ApplyToDataUnit:
             result = DataUnit(**dict(zip(units, res)))
         return result
     
-    def apply_with_ray(self, wrapped, instance, *args, **kwargs):
-        state = ray.put(instance)
-        res = [ray.remote(wrapped.__func__).remote(state, *arg, **kwarg) for arg, kwarg in zip(args, kwargs.values())]
-        return ray.get(res)
+    # def apply_with_ray(self, wrapped, instance, *args, **kwargs):
+    #     state = ray.put(instance)
+    #     res = [ray.remote(wrapped.__func__).remote(state, *arg, **kwarg) for arg, kwarg in zip(args, kwargs.values())]
+    #     return ray.get(res)
     
     def apply_with_map(self, wrapped, instance, *args, **kwargs):
         return [wrapped(*arg, **kwarg) for arg, kwarg in zip(args, kwargs.values())]

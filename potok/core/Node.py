@@ -40,15 +40,12 @@ class Operator(Node):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
     
-    @ApplyToDataUnit()
     def x_forward(self, x: DataUnit) -> Data:
         return x
 
-    @ApplyToDataUnit()
     def y_forward(self, y: DataUnit, x: DataUnit = None, x_frwd: DataUnit = None) -> DataUnit:
         return y
 
-    @ApplyToDataUnit()
     def y_backward(self, y_frwd: DataUnit) -> DataUnit:
         return y_frwd
 

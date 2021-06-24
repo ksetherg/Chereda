@@ -23,12 +23,12 @@ class NNModel(Node):
     def transform_x(self, x: Data) -> Data:
         x_new = np.swapaxes(x.data, -1, 1)
         x_new = torch.from_numpy(x_new)
-        x_new = x_new.to(torch.device("cpu"), dtype=torch.float32)
+        x_new = x_new.to(torch.device("cuda"), dtype=torch.float32)
         return x_new
 
     def transform_y(self, y: Data) -> Data:
         y_new = torch.from_numpy(y.data)
-        y_new = y_new.to(torch.device("cpu"), dtype=torch.long)
+        y_new = y_new.to(torch.device("cuda"), dtype=torch.long)
         return y_new
     
     def fit(self, x: Data, y: Data) -> Tuple[Data, Data]:

@@ -120,26 +120,27 @@ class EpochTrainer(Node):
         x, y = x.X, y.Y
         for e in range(self.epochs):
             print(f'Training Epoch: {e+1}/{self.epochs}')
-            x2, y2 = self.model.fit(x, y)
+            y2 = self.model.fit_predict(x, y)
             '''y2 is datalayer'''
-            # error = self.get_error(y2, y)
-            # print('train_loss=', error['train'], 'valid_loss=', error['valid'])
-            # writer.add_scalars('Loss', {'train': error['train'],
-            #                             'valid': error['valid']}, e)
-        return x2, y2
+            # print('from Epoch trainer', y2.args[0]['valid'].data)
+            error = self.get_error(y2.args[0], y)
+            print('train_loss=', error['train'], 'valid_loss=', error['valid'])
+            writer.add_scalars('Loss', {'train': error['train'],
+                                        'valid': error['valid']}, e)
+        return x, y2.args[0]
 
     def predict_forward(self, x : DataUnit) -> DataUnit:
         x2 = self.model.predict_forward(x)
         return x2
 
-    def predict_backward(self, y_frwd: DataUnit) -> DataUnit:
-        y = self.model.predict_backward(y_frwd)
-        return y
+    # def predict_backward(self, y_frwd: DataUnit) -> DataUnit:
+    #     y = self.model.predict_backward(y_frwd)
+    #     return y
 
     @ApplyToDataUnit()
     def get_error(self, y_pred: DataUnit, y_true: DataUnit) -> DataUnit:
         pred = torch.from_numpy(y_pred.data)
-        true = torch.from_numpy(y_pred.Y.data)
+        true = torch.from_numpy(y_true.data)
         error = F.nll_loss(pred, true)
         return error
     

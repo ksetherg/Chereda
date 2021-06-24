@@ -2,11 +2,11 @@ from ..core import Node, Operator, ApplyToDataUnit, DataUnit, Data, DataLayer
 from .ImageData import ImageClassificationData
 
 from typing import List, Iterator, Tuple
-
 import torch
 import torch.nn.functional as F
 from tqdm import tqdm
 import gc
+
 
 class BatchTrainer(Node):
     def __init__(self, model, **kwargs):
@@ -36,10 +36,17 @@ class BatchTrainer(Node):
             valid_loss_error = self.model.get_error(y_valid_pred, y_val_batch)
             valid_errors.append(valid_loss_error)
             
-        print("Train: ", torch.mean(torch.FloatTensor(train_errors)))
-        print("Valid: ", torch.mean(torch.FloatTensor(valid_errors)))
-
+        print("Train: ", torch.mean(torch.FloatTensor(train_errors)), "Valid: ", torch.mean(torch.FloatTensor(valid_errors)))
+        # print("From batch trainer", valid)
         y_frwd = DataUnit(train=train, valid=valid)
 
         gc.collect()
         return x, y_frwd
+    
+    @ApplyToDataUnit()
+    def predict_forward(self, x : DataUnit) -> DataUnit:
+        batches = []
+        for x_batch in tqdm(x, desc='Batch predicting'):
+            y_pred = self.model.predict_forward(x_batch)
+            batches.append(y_pred)
+        return batches

@@ -126,7 +126,7 @@ class ImageClassificationData(Data):
 
         data_cmbn = None
         datas_list = [data.data for data in datas]
-        if all(datas_list):
+        if not any(elem is None for elem in datas_list):
             data_cmbn = np.concatenate(datas_list)
         
         new = datas[0].copy(df=df_cmbn, data=data_cmbn)
