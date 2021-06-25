@@ -8,7 +8,7 @@ from time import gmtime, strftime
 from ..core import Node, ApplyToDataUnit, DataUnit, Data
 
 
-class NNModel(Node):
+class TorchNNModel(Node):
     def __init__(self, model,
                  optimizer,
                  loss_func,

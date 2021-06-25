@@ -37,5 +37,5 @@ class Folder(Operator):
             folds = [valid_xy.get_by_index(indx) for indx in self.folds]
             folds = [fold.copy(**{'test': xy['test']}) for fold in folds]
         else:
-            folds = [xy]
+            folds = [xy]*self.n_folds
         return DataLayer(*folds)

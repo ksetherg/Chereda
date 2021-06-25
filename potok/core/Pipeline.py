@@ -22,32 +22,17 @@ class Pipeline(Node):
         self.data_shapes = None
         self.current_fit = 0
         self.current_predict = 0
-
-    def check_input(self, x, y=None):
-        if not isinstance(x, Data):
-            raise Exception('Unknown data type.')
-        if not isinstance(x, DataLayer):
-            x = DataLayer(x)
-        if y is not None:
-            if not isinstance(y, Data):
-                raise Exception('Unknown data type.')
-            if not isinstance(y, DataLayer):
-                y = DataLayer(y)
-            return x, y
-        return x
     
     def next_layer(self, node, n):
         layer = [node.copy for i in range(n)]
         return Layer(*layer)
     
     def fit(self, x, y):
-        x, y = self.check_input(x, y)
         layers = []
         for node in self.nodes:
             assert len(x) == len(y)
             layer = self.next_layer(node, len(x))
             x, y = layer.fit(x, y)
-            gc.collect()
             layers.append(layer)
         self.layers = layers
         return x, y
@@ -77,7 +62,7 @@ class Pipeline(Node):
             x = layer.predict_forward(x)
         return x
     
-    def predict_backward(self, y):   
+    def predict_backward(self, y):
         if self.layers is None:
             raise Exception('Fit your model before.')
         for layer in self.layers[::-1]:
@@ -85,7 +70,6 @@ class Pipeline(Node):
         return y
 
     def predict(self, x):
-        x = self.check_input(x)
         y2 = self.predict_forward(x)
         y1 = self.predict_backward(y2)
         return y1

@@ -52,3 +52,8 @@ class AlbAugment(Node):
                     return X.copy(data=np.asarray(imgs)), args[1]
         else:
             return args
+            
+    def predict_forward(self, x : DataUnit) -> DataUnit:
+        x_aug = copy.copy(x.X)
+        x_aug = self.augment(x_aug, augs=self.augmentations)
+        return x_aug

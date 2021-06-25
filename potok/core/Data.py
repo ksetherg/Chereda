@@ -72,8 +72,8 @@ class DataUnit(Data):
         return
 
     def to_dict(self) -> dict:
-        return self.copy()
-    
+        return self.copy().__dict__
+
     def update(self, state: dict):
         self.__dict__.update(state)
         return 

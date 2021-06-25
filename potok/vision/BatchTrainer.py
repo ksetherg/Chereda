@@ -15,7 +15,6 @@ class BatchTrainer(Node):
 
 
     def fit(self, x: DataUnit, y: DataUnit) -> Tuple[DataUnit, DataUnit]:
-        # print('Training on batchs...')
         x_train, x_valid = x['train'], x['valid']
         y_train, y_valid = y['train'], y['valid']
 
@@ -37,7 +36,6 @@ class BatchTrainer(Node):
             valid_errors.append(valid_loss_error)
             
         print("Train: ", torch.mean(torch.FloatTensor(train_errors)), "Valid: ", torch.mean(torch.FloatTensor(valid_errors)))
-        # print("From batch trainer", valid)
         y_frwd = DataUnit(train=train, valid=valid)
 
         gc.collect()

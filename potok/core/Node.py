@@ -1,27 +1,51 @@
 import copy
+import dill
 from typing import List, Iterator, Tuple
 from .Data import Data, DataUnit
 from .ApplyToDataUnit import ApplyToDataUnit
 
+class Serializable:
 
-class Node:
+    def state(self, state):
+        return state
+
+    def _save_(self, path: str = None) -> None:
+        pass
+
+    def _load_(self, path: str = None) -> None:
+        pass
+
+    def save(self, path: str = None) -> None:
+        self._save_(self, path)
+        file_name = path + self.name + '.dill'
+        with open(file_name, "wb") as dill_file:
+            dill.dump(self, dill_file)
+
+    def load(self, path: str = None) -> None:
+        file_name = path + self.name + '.dill'
+        with open(file_name, "rb") as dill_file:
+            instance = dill.load(dill_file)
+            self.__setstate__(instance.__dict__)
+        self._load_(path)
+        # return instance
+    
+    def __getstate__(self) -> dict:
+        state = self.__dict__.copy()
+        state = self.state(state)
+        return state
+    
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        return
+
+
+class Node(Serializable):
     def __init__(self, **kwargs):
         if bool(kwargs) and ('name' in kwargs):
             self.name = kwargs['name']
         else:
             self.name = self.__class__.__name__
         
-    def __getstate__(self) -> dict:
-        state = self.__dict__.copy()
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-        return
-    
-    def __str__(self) -> str:
-        return self.name
-
     def fit(self, x: DataUnit, y: DataUnit) -> Tuple[DataUnit, DataUnit]:
         return x, y
 
@@ -34,6 +58,9 @@ class Node:
     @property
     def copy(self) -> 'Node':
         return copy.copy(self)
+
+    def __str__(self) -> str:
+        return self.name
 
 
 class Operator(Node):
@@ -65,3 +92,23 @@ class Operator(Node):
     def predict_backward(self, y_frwd: DataUnit) -> DataUnit:
         y = self.y_backward(y_frwd)
         return y
+
+
+class Regression(Node):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+    
+    def _predict_(self, x: DataUnit) -> Data:
+        return x
+
+    def _fit_(self, x: DataUnit, y: DataUnit) -> None:
+        return None
+
+    def fit(self, x: DataUnit, y: DataUnit) -> Tuple[DataUnit, DataUnit]:
+        self._fit_(x, y)
+        y_frwd = self._predict_(x)
+        return x, y_frwd
+
+    def predict_forward(self, x: DataUnit) -> DataUnit:
+        y_frwd = self._predict_(x)
+        return y_frwd

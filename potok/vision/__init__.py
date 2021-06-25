@@ -6,4 +6,4 @@ from .BatchTrainer import BatchTrainer
 from .EpochTrainer import EpochTrainer
 from .Augmentation import AlbAugment
 from .Batcher import Batcher
-from .NNModel import NNModel
+from .TorchNNModel import NNModel
