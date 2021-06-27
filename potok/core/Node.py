@@ -6,27 +6,27 @@ from .ApplyToDataUnit import ApplyToDataUnit
 
 class Serializable:
 
-    def state(self, state):
+    def _state_(self, state):
         return state
 
-    def _save_(self, path: str = None) -> None:
+    def _save_(self, prefix: str = None) -> None:
         pass
 
-    def _load_(self, path: str = None) -> None:
+    def _load_(self, prefix: str = None) -> None:
         pass
 
-    def save(self, path: str = None) -> None:
-        self._save_(self, path)
-        file_name = path + self.name + '.dill'
+    def save(self, prefix: str = None) -> None:
+        self._save_(prefix)
+        file_name = prefix + self.name + '.dill'
         with open(file_name, "wb") as dill_file:
             dill.dump(self, dill_file)
 
-    def load(self, path: str = None) -> None:
-        file_name = path + self.name + '.dill'
+    def load(self, prefix: str = None) -> None:
+        file_name = prefix + self.name + '.dill'
         with open(file_name, "rb") as dill_file:
             instance = dill.load(dill_file)
             self.__setstate__(instance.__dict__)
-        self._load_(path)
+        self._load_(prefix)
         # return instance
     
     def __getstate__(self) -> dict:

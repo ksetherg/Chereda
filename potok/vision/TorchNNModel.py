@@ -3,12 +3,12 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 import gc
-from time import gmtime, strftime
+
 
 from ..core import Node, ApplyToDataUnit, DataUnit, Data
 
 
-class TorchNNModel(Node):
+class NNModel(Node):
     def __init__(self, model,
                  optimizer,
                  loss_func,
@@ -57,32 +57,28 @@ class TorchNNModel(Node):
             pred = x.copy(data=logits.cpu().numpy())
         gc.collect()
         return pred
+    
+    def _state_(self, state):
+        state['model'] = None
+        state['optimizer'] = None
+        return state
 
-    def _save_(self, epoch, loss):
-        prefix = 'models/'
+    def _save_(self, prefix: str):
         file_name='model_weights'
-        suffix = strftime("%y_%m_%d_%H_%M_%S", gmtime())
         ext = '.pth'
-        path = prefix + file_name + '_' + suffix + ext
+        path = prefix + file_name + '_' + ext
         torch.save({
-                    'epoch': epoch,
                     'model_state_dict': self.model.state_dict(),
                     'optimizer_state_dict': self.optimizer.state_dict(),
-                    'loss': loss,
                     },
                     path)
 
-    def _load_(self, file_name):
-        prefix = 'models/'
+    def _load_(self, prefix: str):
+        file_name = 'model_weights'
         ext = '.pth'
         path =  prefix + file_name + ext
         checkpoint = torch.load(path)
         self.model.load_state_dict(checkpoint['model_state_dict'])
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
     
-    def get_error(self, y_pred, y_true):
-        pred = torch.from_numpy(y_pred.data)
-        true = torch.from_numpy(y_true.data)
-        error = F.nll_loss(pred, true)
-        return error
     

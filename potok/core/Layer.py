@@ -70,6 +70,10 @@ class Layer(Node):
                 irr_list.append(sl)
         return irr_list
 
+    def save(self, prefix):
+        for  i, node in enumerate(self.layer):
+            node.save()
+
 
 
 # class Layer(Node):
