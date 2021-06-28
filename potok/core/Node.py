@@ -1,27 +1,30 @@
 import copy
 import dill
+from pathlib import Path
+
 from typing import List, Iterator, Tuple
 from .Data import Data, DataUnit
 from .ApplyToDataUnit import ApplyToDataUnit
 
 class Serializable:
 
-    def _state_(self, state):
+    def _state_(self, state: dict):
         return state
 
-    def _save_(self, prefix: str = None) -> None:
+    def _save_(self, prefix: Path = None) -> None:
         pass
 
-    def _load_(self, prefix: str = None) -> None:
+    def _load_(self, prefix: Path = None) -> None:
         pass
 
-    def save(self, prefix: str = None) -> None:
+    def save(self, prefix: Path = None) -> None:
+        prefix.mkdir(parents=True, exist_ok=True)
         self._save_(prefix)
-        file_name = prefix + self.name + '.dill'
+        file_name = prefix / (self.name + '.dill')
         with open(file_name, "wb") as dill_file:
             dill.dump(self, dill_file)
 
-    def load(self, prefix: str = None) -> None:
+    def load(self, prefix: Path = None) -> None:
         file_name = prefix + self.name + '.dill'
         with open(file_name, "rb") as dill_file:
             instance = dill.load(dill_file)
@@ -31,10 +34,10 @@ class Serializable:
     
     def __getstate__(self) -> dict:
         state = self.__dict__.copy()
-        state = self.state(state)
+        state = self._state_(state)
         return state
     
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict):
         self.__dict__.update(state)
         return
 
