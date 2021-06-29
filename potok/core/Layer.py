@@ -1,5 +1,6 @@
 # import ray
 from pathlib import Path
+from typing import List, Tuple
 
 from .Node import Node
 from .Data import Data, DataUnit, DataLayer
@@ -11,13 +12,19 @@ class Layer(Node):
         layer = []
         for node in nodes:
             if isinstance(node, Node):
-                layer.append(node.copy)
+                layer.append(node)
             else:
                 raise Exception(f'Unknown node type={node.__class__.__name__}')
                 
         self.layer = layer
-        # self.shapes = None
-    
+
+    def __len__(self) -> int:
+        return len(self.layer)
+
+    def __getitem__(self, idx: int) -> Node:
+        res = self.layer[idx]
+        return res
+
     def save(self, prefix: Path):
         for i, node in enumerate(self.layer):
             suffix_nd = node.name + '_' + str(i)
@@ -33,23 +40,35 @@ class Layer(Node):
     def fit(self, x, y):
         assert len(self.layer) == len(x) == len(y), 'Layer and data shapes must be same.'
         res = [node.fit(xx, yy) for node, xx, yy in zip(self.layer, x, y)]
-        x2 = DataLayer(*list(map(lambda x: x[0], res))[0])
-        y2 = DataLayer(*list(map(lambda x: x[1], res))[0])
+        x2 = self._flatten_forward_(list(map(lambda v: v[0], res)))
+        y2 = self._flatten_forward_(list(map(lambda v: v[1], res)))
         return x2, y2
     
     def predict_forward(self, x):
         assert len(self.layer) == len(x), 'Layer and data shapes must be same.'        
         res = [node.predict_forward(xx) for node, xx in zip(self.layer, x)]
-        result1d = DataLayer(*res[0])
-        return result1d
+        x2 = self._flatten_forward_(res)
+        return x2
     
     def predict_backward(self, y):
-        y2 = (y, )
+        y2 = self._flatten_backward_(y)
         assert len(self.layer) == len(y2), 'Layer and data shapes must be same.'
         res = [node.predict_backward(yy) for node, yy in zip(self.layer, y2)]
         result = DataLayer(*res)
         return result
-    
+
+    def _flatten_forward_(self, data: List) -> DataLayer:
+        if isinstance(data[0], (DataLayer, list)):
+            data = data[0]
+        return DataLayer(*data)
+
+    def _flatten_backward_(self, data: DataLayer) -> DataLayer:
+        if len(data) > len(self.layer):
+            data = DataLayer(*[data])
+        elif len(data) < len(self.layer):
+            raise Exception('Layer and data shapes must be same.')
+        return data
+
 
 # class Layer(Node):
 #     def __init__(self, *nodes, **kwargs):
@@ -64,8 +83,6 @@ class Layer(Node):
 #         self.layer = layer
 #         self.shapes = None
 
-
-        
 #     def fit(self, x, y):
 #         assert len(self.layer) == len(x) == len(y), 'Layer and data shapes must be same.'
 

@@ -14,7 +14,8 @@ class Folder(Operator):
     def _fit_(self, x: DataUnit, y: DataUnit) -> None:
         indx = x['train'].index
         folder = KFold(n_splits=self.n_folds, shuffle=True, random_state=self.seed)
-        folds = DataLayer(*[DataUnit(train, valid) for train, valid in folder.split(indx)])
+        # folds = DataLayer(*[DataUnit(train, valid) for train, valid in folder.split(indx)])
+        folds = [DataUnit(train, valid) for train, valid in folder.split(indx)]
         self.folds = folds
         return None
 
@@ -39,3 +40,4 @@ class Folder(Operator):
         else:
             folds = [xy]*self.n_folds
         return DataLayer(*folds)
+        # return folds

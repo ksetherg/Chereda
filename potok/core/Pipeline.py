@@ -26,11 +26,22 @@ class Pipeline(Node):
                 
         self.nodes = _nodes_
         self.layers = None
+        self.shapes = kwargs['shapes']
         # self.data_shapes = None
         # self.current_fit = 0
         # self.current_predict = 0
-    
+
+    def _compile_(self):
+        layers = []
+        for node, num in zip(self.nodes, self.shapes):
+            layer = Layer(*[node.copy for i in range(num)])
+            layers.append(layer)
+        self.layers = layers
+        
     def save(self, prefix: Path) -> None:
+        if self.layers is None:
+            raise Exception('Fit your model before.')
+    
         suffix = strftime("%y_%m_%d_%H_%M_%S", gmtime())
         ppln_name = self.name + suffix
         for i, layer in enumerate(self.layers):
@@ -39,23 +50,17 @@ class Pipeline(Node):
             layer.save(prefix_lyr)
 
     def load(self, prefix: Path):
+        self._compile_()
         for i, layer in enumerate(self.layers):
             suffix_lyr = layer.name + '_' + str(i)
             prefix_lyr = prefix / suffix_lyr
             layer.load(prefix_lyr)
-        
-    def _next_layer_(self, node, n):
-        layer = [node.copy for i in range(n)]
-        return Layer(*layer)
     
     def fit(self, x: DataLayer, y: DataLayer) -> Tuple[DataLayer, DataLayer]:
-        layers = []
-        for node in self.nodes:
-            assert len(x) == len(y)
-            layer = self._next_layer_(node, len(x))
+        self._compile_()
+        for layer in self.layers:
+            assert len(x) == len(y) == len(layer), 'Invalid Data shapes.'
             x, y = layer.fit(x, y)
-            layers.append(layer)
-        self.layers = layers
         return x, y
     
     def predict_forward(self, x: DataLayer) -> DataLayer:
@@ -91,10 +96,6 @@ class Pipeline(Node):
                 pipe += ' -> '
         pipe += ')'
         return pipe
-    
-    # def _if_exist_(self, path):
-    #     if os.path.exists(path):
-    #         shutil.rmtree(path)
         
     # def fit_step(self, x, y):
     #     self.current_fit += 1

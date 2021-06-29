@@ -2,6 +2,7 @@ import copy
 import dill
 from pathlib import Path
 
+
 from typing import List, Iterator, Tuple
 from .Data import Data, DataUnit
 from .ApplyToDataUnit import ApplyToDataUnit
@@ -25,7 +26,7 @@ class Serializable:
             dill.dump(self, dill_file)
 
     def load(self, prefix: Path = None) -> None:
-        file_name = prefix + self.name + '.dill'
+        file_name = prefix / (self.name + '.dill')
         with open(file_name, "rb") as dill_file:
             instance = dill.load(dill_file)
             self.__setstate__(instance.__dict__)

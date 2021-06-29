@@ -138,7 +138,7 @@ class LightGBM(Node):
         self.feature_importance_df = pd.DataFrame.from_dict(importance, orient='index', columns=['weight'])
         self.feature_importance_df.index.name = 'features'
 
-    def get_feature_importance(self, child=None):
+    def get_feature_importance(self):
         if not hasattr(self, 'feature_importance_df'):
             return None
         return self.feature_importance_df
