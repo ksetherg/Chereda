@@ -17,13 +17,13 @@ class TabularData(Data):
         self.target = target
 
     @property
-    def X(self) -> pd.DataFrame:
+    def X(self) -> 'TabularData':
         columns = [col for col in self.data.columns if col not in self.target]
         X = self.copy(data=self.data[columns])
         return X
 
     @property
-    def Y(self) -> pd.DataFrame:
+    def Y(self) -> 'TabularData':
         columns = [col for col in self.data.columns if col in self.target]
         y = self.copy(data=self.data[columns])
         return y
@@ -32,21 +32,20 @@ class TabularData(Data):
     def index(self):
         return self.data.index
 
-    def get_by_index(self, index) -> pd.DataFrame:
+    def get_by_index(self, index) -> 'TabularData':
         chunk = self.data.loc[self.data.index.isin(index)]
         new = self.copy(data=chunk)
         return new
 
-    def reindex(self, index) -> pd.DataFrame:
+    def reindex(self, index) -> 'TabularData':
         df = self.data.reindex(index)
         new = self.copy(data=df)
         return new
 
     @classmethod
-    def combine(cls, datas: List[pd.DataFrame]) -> pd.DataFrame:
+    def combine(cls, datas: List['TabularData']) -> 'TabularData':
         dfs = [data.data for data in datas]
         df_cmbn = pd.concat(dfs, axis=1, keys=range(len(dfs)))
         df_cmbn = df_cmbn.groupby(level=[1], axis=1).mean()
         new = datas[0].copy(data=df_cmbn)
         return new
-    

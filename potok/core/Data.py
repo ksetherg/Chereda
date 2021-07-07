@@ -6,9 +6,6 @@ import copy
 
 @dataclass
 class Data:
-    def __str__(self) -> str:
-        return self.__class__.__name__
-
     def __getstate__(self) -> dict:
         state = self.__dict__.copy()
         return state
@@ -48,17 +45,24 @@ class Data:
         return new_data
 
 
-@dataclass
-class DataUnit(Data):
-    train: Data = None
-    valid: Data = None
-    test: Data = None
-    
-    def __post_init__(self):
-        types = [type(v) for k, v in self]
-        assert len(types) >= 1, 'Currently empty DataUnit are not allowed.'
+class DataDict(Data): 
+    def __init__(self, *args, **kwargs) -> None:
+        types = []
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+            types.append(type(v))
+        assert len(types) >= 1, 'Currently empty DataDict are not allowed.'
         assert types.count(types[0]) == len(types), 'All unit types must be the same.'
-        
+                    
+    def __repr__(self) -> str:
+        prefix = self.__class__.__name__ + '(' 
+        body = ', '.join([f'{k}={v!r}' for k, v in self])
+        suffix = ')'
+        return prefix + body + suffix
+    
+    def __len__(self) -> int:
+        return len(self.__dict__)
+    
     def __iter__(self) -> Iterator:
         new_dict = {k: v for k, v in self.__dict__.items() if v is not None}
         return iter(new_dict.items())
@@ -66,144 +70,65 @@ class DataUnit(Data):
     def __getitem__(self, key: str) -> Data:
         return getattr(self, key, None)
     
-    def __setitem__(self, key: str, value: Data):
-        assert key in ['train', 'valid', 'test'], f'Key Error: {key}.'
+    def __setitem__(self, key: str, value: Data) -> None:
+        assert not key in list(self.__dict__.keys()), f'Key Error: {key}.'
         self.update({key: value})
         return
+    
+    def __getstate__(self) -> dict:
+        state = self.__dict__.copy()
+        return state
 
-    def to_dict(self) -> dict:
-        return self.copy().__dict__
-
-    def update(self, state: dict):
+    def __setstate__(self, state: dict) -> None:
         self.__dict__.update(state)
         return 
         
     @property
     def units(self) -> list:
-        units = [k for k, v in self]
+        units = list(self.__dict__.keys())
         return units
     
+    def values(self) -> list:
+        return list(self.__dict__.copy().values())
+    
     @property
-    def X(self) -> 'DataUnit':
+    def X(self) -> 'DataDict':
         X = {k: v.X for k, v in self}
-        return DataUnit(**X)
+        return DataDict(**X)
     
     @property
-    def Y(self) -> 'DataUnit':
+    def Y(self) -> 'DataDict':
         Y = {k: v.Y for k, v in self}
-        return DataUnit(**Y)
+        return DataDict(**Y)
     
     @property
-    def index(self) -> 'DataUnit':
+    def index(self) -> 'DataDict':
         indx = {k: v.index for k, v in self}
-        return DataUnit(**indx)
+        return DataDict(**indx)
 
-    def get_by_index(self, index: 'DataUnit') -> 'DataUnit':
+    def get_by_index(self, index: 'DataDict') -> 'DataDict':
         assert self.units == index.units, 'Units must match.'
-        # f = ray.remote(lambda x, y: x.get_by_index(y))
-        # res = ray.get([f.remote(v1, v2) for (k1, v1), (k2, v2) in zip(self, index)])
-        # res = {k: v for k, v in zip(self.units, res)}
         res = {k1: v1.get_by_index(v2) for (k1, v1), (k2, v2) in zip(self, index)}
-        return DataUnit(**res)
+        return DataDict(**res)
 
-    def reindex(self, index: 'DataUnit') -> 'DataUnit':
+    def reindex(self, index: 'DataDict') -> 'DataDict':
         assert self.units == index.units, 'Units must match.'
-        # f = ray.remote(lambda x, y: x.reindex(y))
-        # res = ray.get([f.remote(v1, v2) for (k1, v1), (k2, v2) in zip(self, index)])
-        # res = {k: v for k, v in zip(self.units, res)}
         res = {k1: v1.reindex(v2) for (k1, v1), (k2, v2) in zip(self, index)}
-        return DataUnit(**res)
-
+        return DataDict(**res)
+    
     @classmethod
-    def combine(cls, datas: 'DataLayer') -> 'DataUnit':
-        units = datas.units
-        data_cls = datas.args[0][units[0]].__class__
+    def combine(cls, datas: 'DataDict') -> 'DataDict':
+        if all([hasattr(v, 'units') for k, v in datas]):
+            units = [v.units for k, v in datas]
+            units = list(set.intersection(*map(set, units)))
+            assert len(units) >= 1, 'Units intersection is empty.'
+            new_datas = {unit: [arg[unit] for arg in datas.values()] for unit in units}
+        else:
+            units = ['combined']
+            new_datas = {'combined': list(datas.values())}
 
-        # f = ray.remote(lambda x: data_cls.combine(x))
-        # res = ray.get([f.remote(datas[unit].to_list()) for unit in units])
-        # res = {k: v for k, v in zip(units, res)}
-
+        data_cls = new_datas[units[0]][0]
         f = lambda x: data_cls.combine(x)
-        res = {unit: f(datas[unit].to_list()) for unit in units}
-        return DataUnit(**res)
-    
-
-@dataclass(init=False)
-class DataLayer(Data):
-    args: List[Data]
-
-    def __init__(self, *args):
-        self.args = args
-        self.validate_types(args)
-    
-    def validate_types(self, args: List[Data]):
-        assert len(args) > 0, 'Currently empty DataLayer are not allowed.'
-        notna = [arg is not None for arg in args]
-        assert all(notna), 'DataLayer contains None.'
-        types = [type(arg) for arg in args]
-        assert types.count(types[0]) == len(types), 'All types must be the same.'
-        
-    def __reduce__(self):
-        return self.__class__, copy.copy(tuple(*self.__dict__.values()))
-        
-    def __iter__(self) -> Iterator:
-        return iter(self.to_list())
-    
-    def __len__(self) -> int:
-        return len(self.to_list())
-    
-    def __getitem__(self, key: str) -> List[Data]:
-        res = [getattr(arg, key, None) for arg in self]
-        return DataLayer(*res)
-    
-    def __setitem__(self, key, value):
-        raise Exception('Not implemented.')
-            
-    def to_list(self) -> list:
-        return list(*self.__dict__.copy().values())
-
-    def update(self, data: list):
-        new = self.__dict__.update({'args': tuple(data)})
-        return new
-
-    @property
-    def units(self) -> list:
-        assert all([hasattr(arg, 'units') for arg in self]), 'Data object has no property units.'
-        units = [arg.units for arg in self]
-        intersection = list(set.intersection(*map(set, units)))
-        assert len(intersection) >= 1, 'Units intersection is empty.'
-        return intersection
-
-    @property
-    def X(self) -> 'DataLayer':
-        X = [arg.X for arg in self]
-        return DataLayer(*X)
-    
-    @property
-    def Y(self) -> 'DataLayer':
-        Y = [arg.Y for arg in self]
-        return DataLayer(*Y)
-    
-    @property
-    def index(self) -> 'DataLayer':
-        indx = [v.index for v in self]
-        return DataLayer(*indx)
-
-    def get_by_index(self, index: 'DataLayer') -> 'DataLayer':
-        assert len(self) == len(index), 'DataLayers must be same shape.'
-        # f = ray.remote(lambda x, y: x.get_by_index(y))
-        # res = ray.get([f.remote(v1, v2) for v1, v2 in zip(self, index)])
-        res = [v1.get_by_index(v2) for v1, v2 in zip(self, index)]
-        return DataLayer(*res)
-
-    def reindex(self, index: 'DataLayer') -> 'DataLayer':
-        assert len(self) == len(index), 'DataLayers must be same shape.'
-        # f = ray.remote(lambda x, y: x.reindex(y))
-        # res = ray.get([f.remote(v1, v2) for v1, v2 in zip(self, index)])
-        res = [v1.reindex(v2) for v1, v2 in zip(self, index)]
-        return DataLayer(*res)
-
-    @classmethod
-    def combine(cls, datas: List['DataLayer']):
-        raise Exception('Not implemented.')
+        res = {unit: f(new_datas[unit]) for unit in units}
+        return DataDict(**res)
     

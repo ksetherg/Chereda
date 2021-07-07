@@ -1,7 +1,8 @@
-from ..core import Node, Operator, ApplyToDataUnit, DataUnit, Data, DataLayer
+from ..core import Node, Operator, ApplyToDataDict, DataDict, Data
 from .ImageData import ImageClassificationData
 
 from typing import List, Iterator, Tuple
+from pathlib import Path
 import torch
 import torch.nn.functional as F
 from tqdm import tqdm
@@ -13,8 +14,19 @@ class BatchTrainer(Node):
         super().__init__(**kwargs)
         self.model = model
 
+    def _restate_(self) -> None:
+        self.__dict__['model'] = None
 
-    def fit(self, x: DataUnit, y: DataUnit) -> Tuple[DataUnit, DataUnit]:
+    def _save_(self, prefix: Path = None) -> None:
+        path = prefix / self.model.name
+        self.model.save(path)
+
+    def _load_(self, prefix: Path = None) -> None:
+        path = prefix / self.model.name
+        self.model.load(path)
+
+    def fit(self, x: DataDict, y: DataDict) -> Tuple[DataDict, DataDict]:
+        # print('Training on batchs...')
         x_train, x_valid = x['train'], x['valid']
         y_train, y_valid = y['train'], y['valid']
 
@@ -36,13 +48,14 @@ class BatchTrainer(Node):
             valid_errors.append(valid_loss_error)
             
         print("Train: ", torch.mean(torch.FloatTensor(train_errors)), "Valid: ", torch.mean(torch.FloatTensor(valid_errors)))
-        y_frwd = DataUnit(train=train, valid=valid)
+        # print("From batch trainer", valid)
+        y_frwd = DataDict(train=train, valid=valid)
 
         gc.collect()
         return x, y_frwd
     
-    @ApplyToDataUnit()
-    def predict_forward(self, x : DataUnit) -> DataUnit:
+    @ApplyToDataDict()
+    def predict_forward(self, x : DataDict) -> DataDict:
         batches = []
         for x_batch in tqdm(x, desc='Batch predicting'):
             y_pred = self.model.predict_forward(x_batch)

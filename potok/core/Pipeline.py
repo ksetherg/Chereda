@@ -1,5 +1,5 @@
 # import copy
-from .Data import Data, DataUnit, DataLayer
+from .Data import Data, DataDict
 from .Node import Node, Operator
 from .Layer import Layer
 
@@ -36,7 +36,7 @@ class Pipeline(Node):
         for node, num in zip(self.nodes, self.shapes):
             layer = Layer(*[node.copy for i in range(num)])
             layers.append(layer)
-        self.layers = layers
+        return layers
         
     def save(self, prefix: Path) -> None:
         if self.layers is None:
@@ -50,39 +50,41 @@ class Pipeline(Node):
             layer.save(prefix_lyr)
 
     def load(self, prefix: Path):
-        self._compile_()
-        for i, layer in enumerate(self.layers):
+        layers = self._compile_()
+        for i, layer in enumerate(layers):
             suffix_lyr = layer.name + '_' + str(i)
             prefix_lyr = prefix / suffix_lyr
             layer.load(prefix_lyr)
+        self.layers = layers
     
-    def fit(self, x: DataLayer, y: DataLayer) -> Tuple[DataLayer, DataLayer]:
-        self._compile_()
-        for layer in self.layers:
+    def fit(self, x: DataDict, y: DataDict) -> Tuple[DataDict, DataDict]:
+        layers = self._compile_()
+        for layer in layers:
             assert len(x) == len(y) == len(layer), 'Invalid Data shapes.'
             x, y = layer.fit(x, y)
+        self.layers = layers
         return x, y
     
-    def predict_forward(self, x: DataLayer) -> DataLayer:
+    def predict_forward(self, x: DataDict) -> DataDict:
         if self.layers is None:
             raise Exception('Fit your model before.')
         for layer in self.layers:     
             x = layer.predict_forward(x)
         return x
     
-    def predict_backward(self, y: DataLayer) -> DataLayer:
+    def predict_backward(self, y: DataDict) -> DataDict:
         if self.layers is None:
             raise Exception('Fit your model before.')
         for layer in self.layers[::-1]:
             y = layer.predict_backward(y)
         return y
 
-    def predict(self, x: DataLayer) -> DataLayer:
+    def predict(self, x: DataDict) -> DataDict:
         y2 = self.predict_forward(x)
         y1 = self.predict_backward(y2)
         return y1
 
-    def fit_predict(self, x: DataLayer, y: DataLayer) -> DataLayer:
+    def fit_predict(self, x: DataDict, y: DataDict) -> DataDict:
         x2, y2 = self.fit(x, y)
         y1 = self.predict_backward(y2)
         # y1 = self.predict(x)

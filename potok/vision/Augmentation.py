@@ -1,6 +1,6 @@
 from ..core import Operator, Node
-from ..core import Data, DataUnit
-from ..core import ApplyToDataUnit
+from ..core import Data, DataDict
+from ..core import ApplyToDataDict
 
 import copy
 from typing import List, Iterator, Tuple
@@ -18,13 +18,13 @@ class AlbAugment(Node):
         self.augmentations = augmentations
         self.apply_y = apply_y
     
-    def fit(self, x: DataUnit, y: DataUnit) -> Tuple[DataUnit, DataUnit]:
+    def fit(self, x: DataDict, y: DataDict) -> Tuple[DataDict, DataDict]:
         x_aug = copy.copy(x.X)
         y_aug = copy.copy(y.Y)
         x_aug, y_aug = self.augment(x_aug, y_aug, augs=self.augmentations)
         return x_aug, y_aug
     
-    @ApplyToDataUnit()
+    @ApplyToDataDict()
     def augment(self, *args, **kwargs):
         assert len(args) != 0, 'Not enough arguments.'
         if kwargs:
@@ -53,7 +53,7 @@ class AlbAugment(Node):
         else:
             return args
             
-    def predict_forward(self, x : DataUnit) -> DataUnit:
+    def predict_forward(self, x : DataDict) -> DataDict:
         x_aug = copy.copy(x.X)
         x_aug = self.augment(x_aug, augs=self.augmentations)
         return x_aug

@@ -3,9 +3,10 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 import gc
+from pathlib import Path
 
 
-from ..core import Node, ApplyToDataUnit, DataUnit, Data
+from ..core import Node, DataDict, Data
 
 
 class NNModel(Node):
@@ -19,6 +20,24 @@ class NNModel(Node):
         self.loss_func = loss_func
 
         self.train_loss_error = None
+
+    def _restate_(self) -> None:
+        self.__dict__['model'] = None
+        self.__dict__['optimizer'] = None
+
+    def _save_(self, prefix: Path):
+        path = prefix / 'model_weights.pth'
+        torch.save({
+                    'model_state_dict': self.model.state_dict(),
+                    'optimizer_state_dict': self.optimizer.state_dict(),
+                    },
+                    path)
+
+    def _load_(self, prefix: Path):
+        path =  prefix / 'model_weights.pth'
+        checkpoint = torch.load(path)
+        self.model.load_state_dict(checkpoint['model_state_dict'])
+        self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
             
     def transform_x(self, x: Data) -> Data:
         x_new = np.swapaxes(x.data, -1, 1)
@@ -57,28 +76,5 @@ class NNModel(Node):
             pred = x.copy(data=logits.cpu().numpy())
         gc.collect()
         return pred
-    
-    def _state_(self, state):
-        state['model'] = None
-        state['optimizer'] = None
-        return state
-
-    def _save_(self, prefix: str):
-        file_name='model_weights'
-        ext = '.pth'
-        path = prefix + file_name + '_' + ext
-        torch.save({
-                    'model_state_dict': self.model.state_dict(),
-                    'optimizer_state_dict': self.optimizer.state_dict(),
-                    },
-                    path)
-
-    def _load_(self, prefix: str):
-        file_name = 'model_weights'
-        ext = '.pth'
-        path =  prefix + file_name + ext
-        checkpoint = torch.load(path)
-        self.model.load_state_dict(checkpoint['model_state_dict'])
-        self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
     
     

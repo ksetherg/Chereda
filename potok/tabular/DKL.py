@@ -6,7 +6,7 @@ import functools
 # import wrapt
 from typing import List, Iterator, Tuple
 
-from ..core import Operator, DataUnit
+from ..core import Operator, DataDict
 
 
 def make_val_and_grad_fn(value_fn):

@@ -3,7 +3,7 @@ import pandas as pd
 from typing import List, Iterator, Tuple
 from sklearn.linear_model import LinearRegression
 
-from ..core import Node, ApplyToDataUnit, DataUnit, Data
+from ..core import Node, ApplyToDataDict, DataDict, Data
 from .TabularData import TabularData
 
 class LinReg(Node):
@@ -21,7 +21,7 @@ class LinReg(Node):
         self.model = None
         self.index = None
     
-    def _fit_(self, x: DataUnit, y: DataUnit) -> Tuple[DataUnit, DataUnit]:
+    def _fit_(self, x: DataDict, y: DataDict) -> Tuple[DataDict, DataDict]:
         if self.target is None:
             self.target = x['train'].target
 
@@ -45,13 +45,13 @@ class LinReg(Node):
         self.model = LinearRegression().fit(x_train, y_train, sample_weight=w_train)
         return None
 
-    def fit(self, x: DataUnit, y: DataUnit) -> Tuple[DataUnit, DataUnit]:
+    def fit(self, x: DataDict, y: DataDict) -> Tuple[DataDict, DataDict]:
         self._fit_(x, y)
         y_frwd = self.predict_forward(x)
         return x, y_frwd
 
-    @ApplyToDataUnit()
-    def predict_forward(self, x: DataUnit) -> DataUnit:
+    @ApplyToDataDict()
+    def predict_forward(self, x: DataDict) -> DataDict:
         assert self.model is not None, 'Fit model before or load from file.'
         x_new = x.data[self.features]
         # prediction = self.model.predict(exog=X)

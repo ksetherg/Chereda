@@ -6,7 +6,7 @@ import wrapt
 from .Data import DataUnit
 
 
-class ApplyToDataUnit:
+class ApplyToDataDict:
     def __init__(self, mode='all', backend='map'):
         # self.wrapped = wrapped
         self.mode = mode
