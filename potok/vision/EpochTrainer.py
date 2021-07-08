@@ -48,6 +48,7 @@ class EpochTrainer(Node):
         
         print("WHAT", self.model)
 
+        assert self.epochs > 0
         for e in range(self.epochs):
             print(f'Training Epoch: {e+1}/{self.epochs}')
             y2 = self.model.fit_predict(x_frwd, y_frwd)

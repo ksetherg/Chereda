@@ -29,7 +29,7 @@ class LightGBM(Node):
         self.model_params = dict(
             n_estimators=2000,
             learning_rate=0.1,
-            num_class = num_class,
+            num_class=num_class,
             objective=objective,
             # class_weight='balanced',
             importance_type='split',
@@ -47,7 +47,7 @@ class LightGBM(Node):
         self.feature_importance_df = None
 
 
-    def _fit_(self, x: DataDict, y: DataDict) -> Tuple[DataDict, DataDict]:
+    def _fit_(self, x: DataDict, y: DataDict) -> None:
         self._set_model_()
 
         if self.target is None:
@@ -92,7 +92,7 @@ class LightGBM(Node):
         return x, y_frwd
 
     @ApplyToDataDict(mode='efficient')
-    def predict_forward(self, x : DataDict) -> DataDict:
+    def predict_forward(self, x: DataDict) -> DataDict:
         assert self.model is not None, 'Fit model before or load from file.'
         x_new = x.data[self.features]
         if self.mode == 'Classifier':
@@ -101,6 +101,8 @@ class LightGBM(Node):
         elif self.mode == 'Regressor':
             prediction = self.model.predict(x_new)
             prediction = pd.DataFrame(prediction, index=x.index, columns=[self.target])
+        else:
+            raise Exception('Unknown mode.')
         y = TabularData(data=prediction, target=self.target)
         return y
     
@@ -139,6 +141,5 @@ class LightGBM(Node):
         self.feature_importance_df.index.name = 'features'
 
     def get_feature_importance(self):
-        if not hasattr(self, 'feature_importance_df'):
-            return None
         return self.feature_importance_df
+

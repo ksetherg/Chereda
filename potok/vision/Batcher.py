@@ -55,4 +55,3 @@ class Batcher(Operator):
         combined = datas[0].__class__.combine(datas)
         return combined
 
-        

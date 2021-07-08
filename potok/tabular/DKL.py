@@ -39,7 +39,7 @@ class Dkl(Operator):
         data_new = data.copy(data=df_with_weights)
         return data_new
 
-    def y_forward(self, y: DataUnit, x: DataUnit = None, x_frwd: DataUnit = None) -> DataUnit:
+    def y_forward(self, y: DataDict, x: DataDict = None, x_frwd: DataDict = None) -> DataDict:
         y_train_new = None
         if y['train'] is not None:
             y_train_new = self.apply_to_member(y['train'], self.train_weights)
@@ -58,15 +58,15 @@ class Dkl(Operator):
                                        columns=[self.weight_col])
             y_test_new = self.apply_to_member(y['test'], val_weights)
 
-        return DataUnit(train=y_train_new, valid=y_valid_new, test=y_test_new)
+        return DataDict(train=y_train_new, valid=y_valid_new, test=y_test_new)
 
     # @ApplyToDataUnit()
     # def y_backward(self, y_frwd: Data) -> Data:
     #     '''Probably it should remove Weight column'''
     #     return y_frwd
 
-    def _fit_(self, x: DataUnit, y: DataUnit) -> None:
-        if not isinstance(x, DataUnit):
+    def _fit_(self, x: DataDict, y: DataDict) -> None:
+        if not isinstance(x, DataDict):
             raise Exception(f'Error: Dkl only works with DataUnit, not with {x.__class__.__name__}')
         self.calc_weights(x['train'].data, x['test'].data)
         return None
@@ -170,7 +170,7 @@ class Dkl(Operator):
             P = self.calculate_P(optim_results.position, kernel_matrix)
             if not self.check_P(P):
                 self.status = False
-                P = tf.ones([train.shape[0],], dtype=tf.float64) / train.shape[0]
+                P = tf.ones([train.shape[0], ], dtype=tf.float64) / train.shape[0]
 
         self.train_weights = pd.DataFrame(data=P.numpy() * P.numpy().shape[0],
                                           index=train.index,

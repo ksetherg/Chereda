@@ -21,7 +21,7 @@ class LinReg(Node):
         self.model = None
         self.index = None
     
-    def _fit_(self, x: DataDict, y: DataDict) -> Tuple[DataDict, DataDict]:
+    def _fit_(self, x: DataDict, y: DataDict) -> None:
         if self.target is None:
             self.target = x['train'].target
 

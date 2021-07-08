@@ -25,16 +25,15 @@ class NNModel(Node):
         self.__dict__['model'] = None
         self.__dict__['optimizer'] = None
 
-    def _save_(self, prefix: Path):
+    def _save_(self, prefix: Path = None) -> None:
         path = prefix / 'model_weights.pth'
         torch.save({
                     'model_state_dict': self.model.state_dict(),
                     'optimizer_state_dict': self.optimizer.state_dict(),
-                    },
-                    path)
+                    }, path)
 
-    def _load_(self, prefix: Path):
-        path =  prefix / 'model_weights.pth'
+    def _load_(self, prefix: Path = None) -> None:
+        path = prefix / 'model_weights.pth'
         checkpoint = torch.load(path)
         self.model.load_state_dict(checkpoint['model_state_dict'])
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
@@ -67,7 +66,7 @@ class NNModel(Node):
         gc.collect()
         return x, y_frwd
 
-    def predict_forward(self, x : Data) -> Data:
+    def predict_forward(self, x: Data) -> Data:
         self.model.eval()
         x_frwd = self.transform_x(x)
         with torch.no_grad():
@@ -76,5 +75,4 @@ class NNModel(Node):
             pred = x.copy(data=logits.cpu().numpy())
         gc.collect()
         return pred
-    
-    
+

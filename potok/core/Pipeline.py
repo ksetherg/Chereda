@@ -38,7 +38,7 @@ class Pipeline(Node):
             layers.append(layer)
         return layers
         
-    def save(self, prefix: Path) -> None:
+    def save(self, prefix: Path = None) -> None:
         if self.layers is None:
             raise Exception('Fit your model before.')
     
@@ -49,7 +49,7 @@ class Pipeline(Node):
             prefix_lyr = prefix / ppln_name / suffix_lyr
             layer.save(prefix_lyr)
 
-    def load(self, prefix: Path):
+    def load(self, prefix: Path = None):
         layers = self._compile_()
         for i, layer in enumerate(layers):
             suffix_lyr = layer.name + '_' + str(i)

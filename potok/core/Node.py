@@ -8,6 +8,11 @@ from .Data import Data, DataDict
 
 
 class Serializable:
+    def __init__(self, **kwargs):
+        if bool(kwargs) and ('name' in kwargs):
+            self.name = kwargs['name']
+        else:
+            self.name = self.__class__.__name__
 
     def _restate_(self) -> None:
         # self.__dict__[key] = None
@@ -45,16 +50,10 @@ class Serializable:
 
 
 class Node(Serializable):
-    def __init__(self, **kwargs):
-        if bool(kwargs) and ('name' in kwargs):
-            self.name = kwargs['name']
-        else:
-            self.name = self.__class__.__name__
-        
     def fit(self, x: Data, y: Data) -> Tuple[Data, Data]:
         return x, y
 
-    def predict_forward(self, x : Data) -> Data:
+    def predict_forward(self, x: Data) -> Data:
         return x
     
     def predict_backward(self, y_frwd: Data) -> Data:
@@ -69,9 +68,6 @@ class Node(Serializable):
 
 
 class Operator(Node):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-    
     def x_forward(self, x: Data) -> Data:
         return x
 

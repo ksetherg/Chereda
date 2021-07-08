@@ -45,7 +45,7 @@ class Data:
         return new_data
 
 
-class DataDict(Data): 
+class DataDict(Data):
     def __init__(self, *args, **kwargs) -> None:
         types = []
         for k, v in kwargs.items():
@@ -71,8 +71,8 @@ class DataDict(Data):
         return getattr(self, key, None)
     
     def __setitem__(self, key: str, value: Data) -> None:
-        assert not key in list(self.__dict__.keys()), f'Key Error: {key}.'
-        self.update({key: value})
+        assert key not in list(self.__dict__.keys()), f'Key Error: {key}.'
+        self.__setstate__({key: value})
         return
     
     def __getstate__(self) -> dict:
@@ -131,4 +131,4 @@ class DataDict(Data):
         f = lambda x: data_cls.combine(x)
         res = {unit: f(new_datas[unit]) for unit in units}
         return DataDict(**res)
-    
+

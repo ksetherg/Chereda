@@ -11,12 +11,15 @@ class StratifiedImageFolder(Folder):
         self.split_ratio = split_ratio
 
     def _fit_(self, x: DataDict, y: DataDict) -> None:
-        indx = x['train'].index
+        assert x['train'] is not None, 'Train required.'
+
+        index = x['train'].index
         strats = y['train'].Y.data
-        train_idx, valid_idx = train_test_split(indx,
+        train_idx, valid_idx = train_test_split(index,
                                                 test_size=self.split_ratio, 
                                                 random_state=self.seed, 
                                                 stratify=strats)
-        folds = [DataDict(train_idx, valid_idx)]
+
+        folds = {'Fold_1': DataDict(train=train_idx, valid=valid_idx)}
         self.folds = folds
         return None

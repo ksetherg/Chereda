@@ -1,9 +1,9 @@
 from functools import partial
 from itertools import starmap
 import wrapt
-# import ray
+import ray
 
-from .Data import DataUnit
+from .Data import DataDict
 
 
 class ApplyToDataDict:
@@ -36,22 +36,26 @@ class ApplyToDataDict:
             res = self.apply_with_ray(wrapped, instance, *args2, **kwargs2)
         elif self.backend == 'map':
             res = self.apply_with_map(wrapped, instance, *args2, **kwargs2)
+        else:
+            raise Exception()
         
         """Must return separately"""
         if isinstance(res[0], tuple):
             result = []
             for i in range(len(res[0])):
                 arg = list(map(lambda x: x[i], res))
-                result.append(DataUnit(**dict(zip(units, arg))))
+                result.append(DataDict(**dict(zip(units, arg))))
             result = tuple(result)
         else:
-            result = DataUnit(**dict(zip(units, res)))
+            result = DataDict(**dict(zip(units, res)))
         return result
-    
-    # def apply_with_ray(self, wrapped, instance, *args, **kwargs):
-    #     state = ray.put(instance)
-    #     res = [ray.remote(wrapped.__func__).remote(state, *arg, **kwarg) for arg, kwarg in zip(args, kwargs.values())]
-    #     return ray.get(res)
-    
-    def apply_with_map(self, wrapped, instance, *args, **kwargs):
+
+    @staticmethod
+    def apply_with_ray(wrapped, instance, *args, **kwargs):
+        state = ray.put(instance)
+        res = [ray.remote(wrapped.__func__).remote(state, *arg, **kwarg) for arg, kwarg in zip(args, kwargs.values())]
+        return ray.get(res)
+
+    @staticmethod
+    def apply_with_map(wrapped, instance, *args, **kwargs):
         return [wrapped(*arg, **kwarg) for arg, kwarg in zip(args, kwargs.values())]

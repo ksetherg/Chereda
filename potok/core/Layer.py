@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import List, Tuple
 
 from .Node import Node
-from .Data import Data, DataUnit, DataLayer
+from .Data import Data, DataDict
 
 
 class Layer(Node):
@@ -25,46 +25,46 @@ class Layer(Node):
         res = self.layer[idx]
         return res
 
-    def save(self, prefix: Path):
+    def save(self, prefix: Path = None) -> None:
         for i, node in enumerate(self.layer):
             suffix_nd = node.name + '_' + str(i)
             prefix_nd = prefix / suffix_nd
             node.save(prefix_nd)
     
-    def load(self, prefix: Path):
+    def load(self, prefix: Path = None) -> None:
         for i, node in enumerate(self.layer):
             suffix_nd = node.name + '_' + str(i)
             prefix_nd = prefix / suffix_nd
             node.load(prefix_nd)
 
-    def fit(self, x, y):
+    def fit(self, x: DataDict, y: DataDict):
         assert len(self.layer) == len(x) == len(y), 'Layer and data shapes must be same.'
         res = [node.fit(xx, yy) for node, xx, yy in zip(self.layer, x, y)]
         x2 = self._flatten_forward_(list(map(lambda v: v[0], res)))
         y2 = self._flatten_forward_(list(map(lambda v: v[1], res)))
         return x2, y2
     
-    def predict_forward(self, x):
+    def predict_forward(self, x: DataDict):
         assert len(self.layer) == len(x), 'Layer and data shapes must be same.'        
         res = [node.predict_forward(xx) for node, xx in zip(self.layer, x)]
         x2 = self._flatten_forward_(res)
         return x2
     
-    def predict_backward(self, y):
+    def predict_backward(self, y: DataDict):
         y2 = self._flatten_backward_(y)
         assert len(self.layer) == len(y2), 'Layer and data shapes must be same.'
         res = [node.predict_backward(yy) for node, yy in zip(self.layer, y2)]
-        result = DataLayer(*res)
+        result = DataDict(*res)
         return result
 
-    def _flatten_forward_(self, data: List) -> DataLayer:
-        if isinstance(data[0], (DataLayer, list)):
+    def _flatten_forward_(self, data: List) -> DataDict:
+        if isinstance(data[0], (DataDict, list)):
             data = data[0]
-        return DataLayer(*data)
+        return DataDict(*data)
 
-    def _flatten_backward_(self, data: DataLayer) -> DataLayer:
+    def _flatten_backward_(self, data: DataDict) -> DataDict:
         if len(data) > len(self.layer):
-            data = DataLayer(*[data])
+            data = DataDict(*[data])
         elif len(data) < len(self.layer):
             raise Exception('Layer and data shapes must be same.')
         return data
