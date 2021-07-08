@@ -27,42 +27,43 @@ class Pipeline(Node):
         self.nodes = _nodes_
         self.layers = None
         self.shapes = kwargs['shapes']
-        # self.data_shapes = None
+
         # self.current_fit = 0
         # self.current_predict = 0
 
-    def _compile_(self):
+    def _compile_(self) -> None:
         layers = []
         for node, num in zip(self.nodes, self.shapes):
             layer = Layer(*[node.copy for i in range(num)])
             layers.append(layer)
-        return layers
+        self.layers = layers
+        return None
         
     def save(self, prefix: Path = None) -> None:
         if self.layers is None:
             raise Exception('Fit your model before.')
     
         suffix = strftime("%y_%m_%d_%H_%M_%S", gmtime())
-        ppln_name = self.name + suffix
+        pipeline_name = self.name + suffix
         for i, layer in enumerate(self.layers):
             suffix_lyr = layer.name + '_' + str(i)
-            prefix_lyr = prefix / ppln_name / suffix_lyr
+            prefix_lyr = prefix / pipeline_name / suffix_lyr
             layer.save(prefix_lyr)
+        return None
 
     def load(self, prefix: Path = None):
-        layers = self._compile_()
-        for i, layer in enumerate(layers):
+        self._compile_()
+        for i, layer in enumerate(self.layers):
             suffix_lyr = layer.name + '_' + str(i)
             prefix_lyr = prefix / suffix_lyr
             layer.load(prefix_lyr)
-        self.layers = layers
+        return None
     
     def fit(self, x: DataDict, y: DataDict) -> Tuple[DataDict, DataDict]:
-        layers = self._compile_()
-        for layer in layers:
-            assert len(x) == len(y) == len(layer), 'Invalid Data shapes.'
+        self._compile_()
+        for layer in self.layers:
+            assert len(x) == len(y) == len(layer), 'Invalid shapes.'
             x, y = layer.fit(x, y)
-        self.layers = layers
         return x, y
     
     def predict_forward(self, x: DataDict) -> DataDict:

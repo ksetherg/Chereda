@@ -6,10 +6,10 @@ import gc
 from pathlib import Path
 
 
-from ..core import Node, DataDict, Data
+from ..core import Regressor, DataDict, Data
 
 
-class NNModel(Node):
+class NNModel(Regressor):
     def __init__(self, model,
                  optimizer,
                  loss_func,
@@ -49,30 +49,30 @@ class NNModel(Node):
         y_new = y_new.to(torch.device("cuda"), dtype=torch.long)
         return y_new
     
-    def fit(self, x: Data, y: Data) -> Tuple[Data, Data]:
+    def _fit_(self, x: Data, y: Data) -> None:
         self.model.train()
 
-        x_new = self.transform_x(x)
-        y_new = self.transform_y(y)
+        x_frwd = self.transform_x(x)
+        y_frwd = self.transform_y(y)
         
         self.optimizer.zero_grad()
-        y_pred = self.model(x_new)
-        loss = self.loss_func(y_pred, y_new)
+        y_pred = self.model(x_frwd)
+        loss = self.loss_func(y_pred, y_frwd)
         loss.backward()
         self.optimizer.step()
-        with torch.no_grad():
-            logits = F.log_softmax(y_pred, dim=1)
-            y_frwd = y.copy(data=logits.cpu().numpy())
-        gc.collect()
-        return x, y_frwd
+        return None
+        # with torch.no_grad():
+        #     logits = F.log_softmax(y_pred, dim=1)
+        #     y_frwd = y.copy(data=logits.cpu().numpy())
+        # gc.collect()
+        # return x, y_frwd
 
-    def predict_forward(self, x: Data) -> Data:
+    def _predict_(self, x: Data) -> Data:
         self.model.eval()
         x_frwd = self.transform_x(x)
         with torch.no_grad():
             y_pred = self.model(x_frwd)
             logits = F.log_softmax(y_pred, dim=1)
             pred = x.copy(data=logits.cpu().numpy())
-        gc.collect()
         return pred
 

@@ -1,12 +1,13 @@
 import statsmodels.api as sm
 import pandas as pd
-from typing import List, Iterator, Tuple
+# from typing import List, Iterator, Tuple
 from sklearn.linear_model import LinearRegression
 
-from ..core import Node, ApplyToDataDict, DataDict, Data
+from ..core import Regressor, ApplyToDataDict, DataDict
 from .TabularData import TabularData
 
-class LinReg(Node):
+
+class LinReg(Regressor):
     def __init__(self, 
                  target=None,
                  features=None,
@@ -45,13 +46,8 @@ class LinReg(Node):
         self.model = LinearRegression().fit(x_train, y_train, sample_weight=w_train)
         return None
 
-    def fit(self, x: DataDict, y: DataDict) -> Tuple[DataDict, DataDict]:
-        self._fit_(x, y)
-        y_frwd = self.predict_forward(x)
-        return x, y_frwd
-
     @ApplyToDataDict()
-    def predict_forward(self, x: DataDict) -> DataDict:
+    def _predict_(self, x: DataDict) -> DataDict:
         assert self.model is not None, 'Fit model before or load from file.'
         x_new = x.data[self.features]
         # prediction = self.model.predict(exog=X)

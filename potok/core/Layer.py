@@ -39,34 +39,34 @@ class Layer(Node):
 
     def fit(self, x: DataDict, y: DataDict):
         assert len(self.layer) == len(x) == len(y), 'Layer and data shapes must be same.'
-        res = [node.fit(xx, yy) for node, xx, yy in zip(self.layer, x, y)]
-        x2 = self._flatten_forward_(list(map(lambda v: v[0], res)))
-        y2 = self._flatten_forward_(list(map(lambda v: v[1], res)))
+        res = {k1: node.fit(xx, yy) for node, (k1, xx), (k2, yy) in zip(self.layer, x.items(), y.items())}
+        x2 = self._flatten_forward_(DataDict(**{k: v[0] for k, v in res.items()}))
+        y2 = self._flatten_forward_(DataDict(**{k: v[1] for k, v in res.items()}))
         return x2, y2
     
     def predict_forward(self, x: DataDict):
-        assert len(self.layer) == len(x), 'Layer and data shapes must be same.'        
-        res = [node.predict_forward(xx) for node, xx in zip(self.layer, x)]
-        x2 = self._flatten_forward_(res)
+        assert len(self.layer) == len(x), 'Layer and data shapes must be same.'
+        res = {k: node.predict_forward(xx) for node, (k, xx) in zip(self.layer, x.items())}
+        x2 = self._flatten_forward_(DataDict(**res))
         return x2
     
     def predict_backward(self, y: DataDict):
         y2 = self._flatten_backward_(y)
         assert len(self.layer) == len(y2), 'Layer and data shapes must be same.'
-        res = [node.predict_backward(yy) for node, yy in zip(self.layer, y2)]
-        result = DataDict(*res)
+        res = {k: node.predict_backward(yy) for node, (k, yy) in zip(self.layer, y2.items())}
+        result = DataDict(**res)
         return result
 
-    def _flatten_forward_(self, data: List) -> DataDict:
-        if isinstance(data[0], (DataDict, list)):
-            data = data[0]
-        return DataDict(*data)
+    @staticmethod
+    def _flatten_forward_(data: DataDict) -> DataDict:
+        units1 = data.units
+        if isinstance(data[units1[0]], DataDict):
+            units2 = data[units1[0]].units
+            if isinstance(data[units1[0]][units2[0]], DataDict):
+                data = data[units1[0]]
+        return data
 
     def _flatten_backward_(self, data: DataDict) -> DataDict:
-        if len(data) > len(self.layer):
-            data = DataDict(*[data])
-        elif len(data) < len(self.layer):
-            raise Exception('Layer and data shapes must be same.')
         return data
 
 

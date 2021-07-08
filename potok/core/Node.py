@@ -1,9 +1,9 @@
+from __future__ import annotations
 import copy
 import dill
 from pathlib import Path
-
-
 from typing import List, Iterator, Tuple
+
 from .Data import Data, DataDict
 
 
@@ -60,7 +60,7 @@ class Node(Serializable):
         return y_frwd
 
     @property
-    def copy(self) -> 'Node':
+    def copy(self) -> Node:
         return copy.copy(self)
 
     def __str__(self) -> str:
@@ -95,15 +95,15 @@ class Operator(Node):
         return y
 
 
-class Regression(Node):
+class Regressor(Node):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-    
-    def _predict_(self, x: Data) -> Data:
-        return x
 
     def _fit_(self, x: Data, y: Data) -> None:
         return None
+
+    def _predict_(self, x: Data) -> Data:
+        return x
 
     def fit(self, x: Data, y: Data) -> Tuple[Data, Data]:
         self._fit_(x, y)

@@ -1,12 +1,12 @@
 import lightgbm as lgb
 import pandas as pd
-from typing import List, Iterator, Tuple
+# from typing import List, Iterator, Tuple
 
-from ..core import Node, ApplyToDataDict, DataDict, Data
+from ..core import Regressor, ApplyToDataDict, DataDict
 from .TabularData import TabularData
 
 
-class LightGBM(Node):
+class LightGBM(Regressor):
     def __init__(self,
                  target=None,
                  features=None,
@@ -45,7 +45,6 @@ class LightGBM(Node):
         self.model = None
         self.cat_features_idx = None
         self.feature_importance_df = None
-
 
     def _fit_(self, x: DataDict, y: DataDict) -> None:
         self._set_model_()
@@ -86,13 +85,8 @@ class LightGBM(Node):
         self._make_feature_importance_df_()
         return None
 
-    def fit(self, x: DataDict, y: DataDict) -> Tuple[DataDict, DataDict]:
-        self._fit_(x, y)
-        y_frwd = self.predict_forward(x)
-        return x, y_frwd
-
     @ApplyToDataDict(mode='efficient')
-    def predict_forward(self, x: DataDict) -> DataDict:
+    def _predict_(self, x: DataDict) -> DataDict:
         assert self.model is not None, 'Fit model before or load from file.'
         x_new = x.data[self.features]
         if self.mode == 'Classifier':
@@ -105,7 +99,7 @@ class LightGBM(Node):
             raise Exception('Unknown mode.')
         y = TabularData(data=prediction, target=self.target)
         return y
-    
+
     def _set_cat_features_(self, features):
         cat_features_idx = []
         for cat_feature in self.cat_features:
@@ -139,7 +133,4 @@ class LightGBM(Node):
 
         self.feature_importance_df = pd.DataFrame.from_dict(importance, orient='index', columns=['weight'])
         self.feature_importance_df.index.name = 'features'
-
-    def get_feature_importance(self):
-        return self.feature_importance_df
 

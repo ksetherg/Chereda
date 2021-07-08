@@ -1,4 +1,3 @@
-from typing import List
 from sklearn.model_selection import KFold
 
 from ..core import Operator, DataDict
@@ -38,7 +37,7 @@ class Folder(Operator):
             units = [unit + f'_{i}' if unit == 'valid' else unit for i, unit in enumerate(units)]
             units.remove('train')
             valid_xy = DataDict(train=xy['train'], valid=xy['train'])
-            folds = {k: valid_xy.get_by_index(v) for k, v in self.folds}
+            folds = {k: valid_xy.get_by_index(v) for k, v in self.folds.items()}
             [fold.__setstate__({unit: xy[unit] for unit in units}) for k, fold in folds.items()]
         else:
             folds = {f'Fold_{i}': xy for i in range(self.n_folds)}
