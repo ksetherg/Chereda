@@ -95,42 +95,42 @@ class DataDict(Data):
         return iter(self.__dict__.copy().items())
     
     @property
-    def X(self) -> 'DataDict':
+    def X(self) -> DataDict:
         X = {k: v.X for k, v in self.items()}
         return DataDict(**X)
     
     @property
-    def Y(self) -> 'DataDict':
+    def Y(self) -> DataDict:
         Y = {k: v.Y for k, v in self.items()}
         return DataDict(**Y)
     
     @property
-    def index(self) -> 'DataDict':
+    def index(self) -> DataDict:
         indx = {k: v.index for k, v in self.items()}
         return DataDict(**indx)
 
-    def get_by_index(self, index: 'DataDict') -> 'DataDict':
+    def get_by_index(self, index: DataDict) -> DataDict:
         assert self.units == index.units, 'Units must match.'
         res = {k1: v1.get_by_index(v2) for (k1, v1), (k2, v2) in zip(self.items(), index.items())}
         return DataDict(**res)
 
-    def reindex(self, index: 'DataDict') -> 'DataDict':
+    def reindex(self, index: DataDict) -> DataDict:
         assert self.units == index.units, 'Units must match.'
         res = {k1: v1.reindex(v2) for (k1, v1), (k2, v2) in zip(self.items(), index.items())}
         return DataDict(**res)
     
     @classmethod
-    def combine(cls, datas: 'DataDict') -> 'DataDict':
-        if all([hasattr(v, 'units') for k, v in datas]):
-            units = [v.units for k, v in datas.items()]
-            units = list(set.intersection(*map(set, units)))
+    def combine(cls, data: List[DataDict]) -> DataDict:
+        if all([hasattr(v, 'units') for v in data]):
+            units_list = [v.units for v in data]
+            units = sorted(set.intersection(*map(set, units_list)), key=units_list[0].index)
             assert len(units) >= 1, 'Units intersection is empty.'
-            new_datas = {unit: [arg[unit] for arg in datas.values()] for unit in units}
+            new_data = [[arg[unit] for arg in data] for unit in units]
         else:
             units = ['combined']
-            new_datas = {'combined': list(datas.values())}
+            new_data = data
 
-        data_cls = new_datas[units[0]][0]
-        res = {unit: data_cls.combine(new_datas[unit]) for unit in units}
+        data_cls = new_data[0][0]
+        res = {unit: data_cls.combine(new_data[i]) for i, unit in enumerate(units)}
         return DataDict(**res)
 

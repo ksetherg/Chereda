@@ -27,6 +27,7 @@ class Pipeline(Node):
         self.nodes = _nodes_
         self.layers = None
         self.shapes = kwargs['shapes']
+        assert len(self.shapes) == len(self.nodes), 'Data and nodes shapes do not match.'
 
         # self.current_fit = 0
         # self.current_predict = 0

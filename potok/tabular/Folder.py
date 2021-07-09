@@ -1,21 +1,30 @@
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold, train_test_split
 
 from ..core import Operator, DataDict
 
 
 class Folder(Operator):
-    def __init__(self, n_folds: int = 5, seed: int = 4242, **kwargs):
+    def __init__(self,
+                 n_folds: int = 5,
+                 split_ratio: float = 0.2,
+                 seed: int = 4242,
+                 **kwargs) -> None:
         super().__init__(**kwargs)
         self.n_folds = n_folds
+        self.split_ratio = split_ratio
         self.seed = seed
         self.folds = None
 
     def _fit_(self, x: DataDict, y: DataDict) -> None:
         assert x['train'] is not None, 'Train required.'
         index = x['train'].index
-        folder = KFold(n_splits=self.n_folds, shuffle=True, random_state=self.seed)
-        folds = DataDict(**{f'Fold_{i}': DataDict(train=train, valid=valid)
-                            for i, (train, valid) in enumerate(folder.split(index))})
+        if self.n_folds > 1:
+            folder = KFold(n_splits=self.n_folds, shuffle=True, random_state=self.seed)
+            folds = DataDict(**{f'Fold_{i}': DataDict(train=train_idx, valid=valid_idx)
+                                for i, (train_idx, valid_idx) in enumerate(folder.split(index))})
+        else:
+            train_idx, valid_idx = train_test_split(index, test_size=self.split_ratio, random_state=self.seed)
+            folds = {'Fold_1': DataDict(train=train_idx, valid=valid_idx)}
         self.folds = folds
         return None
 
@@ -28,8 +37,9 @@ class Folder(Operator):
         return y2
 
     def y_backward(self, y_frwd: DataDict) -> DataDict:
-        y = DataDict.combine(y_frwd)
-        return y
+        if self.n_folds > 1:
+            y_frwd = DataDict.combine(y_frwd.values())
+        return y_frwd
 
     def get_folds(self, xy: DataDict) -> DataDict:
         units = xy.units

@@ -1,5 +1,3 @@
-from functools import partial
-from itertools import starmap
 import wrapt
 import ray
 
@@ -20,12 +18,9 @@ class ApplyToDataDict:
     #     return self.apply(self.wrapped, self.wrapped.__self__, *args, **kwargs)
     
     def apply(self, wrapped, instance, *args, **kwargs):
-        all_units = []
-        for arg in args:
-            all_units.append(arg.units)
-        assert all_units.count(all_units[0]) == len(all_units)
-        units = all_units[0]
-            
+        units_list = [arg.units for arg in args]
+        units = sorted(set.intersection(*map(set, units_list)), key=units_list[0].index)
+
         if ('train' in units) and (self.mode != 'all'):
             units.remove('train')
 
@@ -38,16 +33,15 @@ class ApplyToDataDict:
             res = self.apply_with_map(wrapped, instance, *args2, **kwargs2)
         else:
             raise Exception()
-        
-        """Must return separately"""
+
         if isinstance(res[0], tuple):
-            result = []
-            for i in range(len(res[0])):
-                arg = list(map(lambda x: x[i], res))
-                result.append(DataDict(**dict(zip(units, arg))))
-            result = tuple(result)
-        else:
-            result = DataDict(**dict(zip(units, res)))
+            raise Exception('Probably fit method was wrapped, it is forbidden.')
+            # result = []
+            # for i in range(len(res[0])):
+            #     arg = [var[i] for var in res]
+            #     result.append(DataDict(**dict(zip(units, arg))))
+            # result = tuple(result)
+        result = DataDict(**dict(zip(units, res)))
         return result
 
     @staticmethod

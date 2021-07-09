@@ -1,4 +1,3 @@
-# import ray
 from pathlib import Path
 from typing import List, Tuple
 
@@ -67,6 +66,8 @@ class Layer(Node):
         return data
 
     def _flatten_backward_(self, data: DataDict) -> DataDict:
+        if len(data) != len(self.layer):
+            data = DataDict(data_1=data)
         return data
 
 
