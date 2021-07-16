@@ -34,7 +34,6 @@ class Layer(Node):
         for i, node in enumerate(self.layer):
             suffix_nd = node.name + '_' + str(i)
             prefix_nd = prefix / suffix_nd
-            print(prefix_nd)
             node.load(prefix_nd)
 
     def fit(self, x: DataDict, y: DataDict):

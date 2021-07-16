@@ -119,8 +119,8 @@ class ImageClassificationData(Data):
         new = self.copy(df=df, data=data)
         return new
 
-    @classmethod
-    def combine(cls, datas: List[Data]) -> Data:
+    @staticmethod
+    def combine(datas: List[Data]) -> Data:
         dfs = [data.df for data in datas]
         df_cmbn = pd.concat(dfs)
 
@@ -131,4 +131,3 @@ class ImageClassificationData(Data):
         
         new = datas[0].copy(df=df_cmbn, data=data_cmbn)
         return new
-        
