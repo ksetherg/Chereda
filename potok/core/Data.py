@@ -15,8 +15,8 @@ class Data:
         self.__dict__.update(state)
         return 
     
-    def __reduce__(self):
-        return self.__class__, copy.copy(tuple(self.__dict__.values()))
+    # def __reduce__(self):
+    #     return self.__class__, copy.copy(tuple(self.__dict__.values()))
         
     @property
     def X(self) -> Data:
@@ -36,8 +36,8 @@ class Data:
     def reindex(self, index) -> Data:
         raise Exception('Not implemented')
 
-    @classmethod
-    def combine(cls, datas: List[Data]) -> Data:
+    @staticmethod
+    def combine(datas: List[Data]) -> Data:
         raise Exception('Not implemented')
     
     def copy(self, **kwargs) -> Data:
@@ -119,8 +119,9 @@ class DataDict(Data):
         res = {k1: v1.reindex(v2) for (k1, v1), (k2, v2) in zip(self.items(), index.items())}
         return DataDict(**res)
     
-    @classmethod
-    def combine(cls, data: List[DataDict]) -> DataDict:
+    @staticmethod
+    def combine(data: List[DataDict]) -> DataDict:
+        #можно сделать просто как метод класса, потому что все равно комбайним поля класса
         if all([hasattr(v, 'units') for v in data]):
             units_list = [v.units for v in data]
             units = sorted(set.intersection(*map(set, units_list)), key=units_list[0].index)

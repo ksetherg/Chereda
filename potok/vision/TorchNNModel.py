@@ -27,16 +27,20 @@ class NNModel(Regressor):
 
     def _save_(self, prefix: Path = None) -> None:
         path = prefix / 'model_weights.pth'
-        torch.save({
-                    'model_state_dict': self.model.state_dict(),
-                    'optimizer_state_dict': self.optimizer.state_dict(),
-                    }, path)
+        if self.model is not None and self.optimizer is not None:
+            torch.save({
+                        'model_state_dict': self.model.state_dict(),
+                        'optimizer_state_dict': self.optimizer.state_dict(),
+                        }, path)
 
     def _load_(self, prefix: Path = None) -> None:
         path = prefix / 'model_weights.pth'
-        checkpoint = torch.load(path)
-        self.model.load_state_dict(checkpoint['model_state_dict'])
-        self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        try:
+            checkpoint = torch.load(path)
+            self.model.load_state_dict(checkpoint['model_state_dict'])
+            self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        except:
+            raise Exception('Weights do not exsist.')
             
     def transform_x(self, x: Data) -> Data:
         x_new = np.swapaxes(x.data, -1, 1)

@@ -1,4 +1,5 @@
 from sklearn.model_selection import KFold, train_test_split
+from pathlib import Path
 
 from ..core import Operator, DataDict
 
@@ -7,26 +8,54 @@ class Folder(Operator):
     def __init__(self,
                  n_folds: int = 5,
                  split_ratio: float = 0.2,
+                 index_name: str = None,
                  seed: int = 4242,
                  **kwargs) -> None:
         super().__init__(**kwargs)
         self.n_folds = n_folds
         self.split_ratio = split_ratio
+        self.index_name = index_name
         self.seed = seed
         self.folds = None
 
     def _fit_(self, x: DataDict, y: DataDict) -> None:
         assert x['train'] is not None, 'Train required.'
+        if self.index_name is not None:
+            self.folds = self.generate_folds_by_index(x, y)
+        else:
+            self.folds = self.generate_folds(x, y)
+        return None
+
+    def generate_folds(self, x: DataDict, y: DataDict) -> dict:
         index = x['train'].index
+        
         if self.n_folds > 1:
             folder = KFold(n_splits=self.n_folds, shuffle=True, random_state=self.seed)
-            folds = DataDict(**{f'Fold_{i}': DataDict(train=train_idx, valid=valid_idx)
+            folds = DataDict(**{f'Fold_{i}': DataDict(train=index[train_idx], valid=index[valid_idx])
                                 for i, (train_idx, valid_idx) in enumerate(folder.split(index))})
         else:
             train_idx, valid_idx = train_test_split(index, test_size=self.split_ratio, random_state=self.seed)
-            folds = {'Fold_1': DataDict(train=train_idx, valid=valid_idx)}
-        self.folds = folds
-        return None
+            folds = {'Fold_1': DataDict(train=index[train_idx], valid=index[valid_idx])}
+        return folds
+
+    def generate_folds_by_index(self, x: DataDict, y: DataDict) -> dict:
+        index = x['train'].index
+        values = x['train'].index.get_level_values(self.index_name).unique().to_numpy()
+
+        if self.n_folds > 1:
+            folder = KFold(n_splits=self.n_folds, shuffle=True, random_state=self.seed)
+
+            folds = DataDict(**{f'Fold_{i}':
+                                DataDict(
+                                    train=index[index.get_level_values(self.index_name).isin(values[train_idx])],
+                                    valid=index[index.get_level_values(self.index_name).isin(values[valid_idx])])
+                                for i, (train_idx, valid_idx) in enumerate(folder.split(values))})
+        else:
+            train_idx, valid_idx = train_test_split(values, test_size=self.split_ratio, random_state=self.seed)
+            folds = {'Fold_1':
+                         DataDict(train=index[index.get_level_values(self.index_name).isin(values[train_idx])],
+                                  valid=index[index.get_level_values(self.index_name).isin(values[valid_idx])])}
+        return folds
 
     def x_forward(self, x: DataDict) -> DataDict:
         x2 = self.get_folds(x)
@@ -52,4 +81,5 @@ class Folder(Operator):
         else:
             folds = {f'Fold_{i}': xy for i in range(self.n_folds)}
         return DataDict(**folds)
+
 

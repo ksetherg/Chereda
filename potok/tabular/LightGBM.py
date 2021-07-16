@@ -1,5 +1,7 @@
 import lightgbm as lgb
 import pandas as pd
+from pathlib import Path
+import joblib
 # from typing import List, Iterator, Tuple
 
 from ..core import Regressor, ApplyToDataDict, DataDict
@@ -28,9 +30,11 @@ class LightGBM(Regressor):
 
         self.model_params = dict(
             n_estimators=2000,
-            learning_rate=0.1,
+            learning_rate=0.05,
             num_class=num_class,
             objective=objective,
+            subsample=0.8,
+            colsample_bytree=0.8,
             # class_weight='balanced',
             importance_type='split',
             n_jobs=-1,
@@ -45,6 +49,33 @@ class LightGBM(Regressor):
         self.model = None
         self.cat_features_idx = None
         self.feature_importance_df = None
+
+    def _restate_(self):
+        self.__dict__['model'] = None
+        self.__dict__['feature_importance_df'] = None
+        return None
+
+    def _save_(self, prefix: Path = None) -> None:
+        path = prefix / 'lightgbm.pkl'
+        if self.model is not None:
+            joblib.dump(self.model, path)
+
+    def _load_(self, prefix: Path = None) -> None:
+        path = prefix / 'lightgbm.pkl'
+        try:
+            self.model = joblib.load(path)
+        except:
+            raise Exception('Weights do not exsist.')
+
+    def _set_model_(self):
+        if self.mode == 'Regressor':
+            self.model = lgb.LGBMRegressor()
+        elif self.mode == 'Classifier':
+            self.model = lgb.LGBMClassifier()
+        else:
+            raise Exception('Unknown mode %s' % self.mode)
+
+        self.model.set_params(**self.model_params)
 
     def _fit_(self, x: DataDict, y: DataDict) -> None:
         self._set_model_()
@@ -69,9 +100,9 @@ class LightGBM(Regressor):
         else:
             self.cat_features_idx = 'auto'
 
-        if len(self.target) > 1 and self.mode == "Classifier":
-            y_train = self._ohe_decode_(y_train)
-            y_valid = self._ohe_decode_(y_valid)
+        # if len(self.target) > 1 and self.mode == "Classifier":
+        #     y_train = self._ohe_decode_(y_train)
+        #     y_valid = self._ohe_decode_(y_valid)
 
         print('Training LightGBM')
         print(f'X_train = {x_train.shape} y_train = {y_train.shape}')
@@ -106,16 +137,6 @@ class LightGBM(Regressor):
             idx = features.index(cat_feature)
             cat_features_idx.append(idx)
         self.cat_features_idx = cat_features_idx
-
-    def _set_model_(self):
-        if self.mode == 'Regressor':
-            self.model = lgb.LGBMRegressor()
-        elif self.mode == 'Classifier':
-            self.model = lgb.LGBMClassifier()
-        else:
-            raise Exception('Unknown mode %s' % self.mode)
-
-        self.model.set_params(**self.model_params)
 
     def _ohe_decode_(self, data):
         df = data[self.target]

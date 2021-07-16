@@ -5,8 +5,6 @@ from .Layer import Layer
 
 import gc
 from pathlib import Path
-import os
-import shutil
 from time import gmtime, strftime
 from typing import List, Iterator, Tuple
 

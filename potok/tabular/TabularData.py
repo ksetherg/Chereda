@@ -42,8 +42,8 @@ class TabularData(Data):
         new = self.copy(data=df)
         return new
 
-    @classmethod
-    def combine(cls, datas: List['TabularData']) -> 'TabularData':
+    @staticmethod
+    def combine(datas: List['TabularData']) -> 'TabularData':
         dfs = [data.data for data in datas]
         df_cmbn = pd.concat(dfs, axis=1, keys=range(len(dfs)))
         df_cmbn = df_cmbn.groupby(level=[1], axis=1).mean()

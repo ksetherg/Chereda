@@ -38,7 +38,15 @@ class Serializable:
             instance = dill.load(dill_file)
             self.__setstate__(instance.__dict__)
         self._load_(prefix)
-        # return instance
+
+    # @classmethod
+    # def load(cls, prefix: Path = None) -> None:
+    #     по факту этот подход лучше, так как в теории не зависит от иницилизации пайплайна
+    #     file_name = prefix / (cls.__name__ + '.dill')
+    #     with open(file_name, "rb") as dill_file:
+    #         instance = dill.load(dill_file)
+    #     instance._load_(prefix)
+    #     return instance
     
     def __getstate__(self) -> dict:
         state = self.__dict__.copy()

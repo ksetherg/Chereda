@@ -1,4 +1,4 @@
-from typing import Tuple
+from pathlib import Path
 from ..core import Operator, DataDict
 
 
@@ -7,6 +7,23 @@ class Validation(Operator):
         super().__init__(**kwargs)
         self.folder = folder
         self.index = None
+
+    # def _restate_(self):
+    #     self.__dict__['folder'] = None
+    #     return None
+    #
+    # def _save_(self, prefix: Path = None) -> None:
+    #     if self.folder is not None:
+    #         self.folder.save(prefix)
+    #
+    # def _load_(self, prefix: Path = None) -> None:
+    #     try:
+    #         print('CHE', self.folder, prefix)
+            # Проблема, что когда я сохраняю валидацию, оно сохраняется с нановым фолдером, далее применяю некорректно
+    #       # Возможное решение, возврашать инстанс загрузки просто, загружать классом, как класс метод
+    #         self.folder.load(prefix)
+    #     except:
+    #         raise Exception('Folder does not exsist.')
 
     def x_forward(self, x: DataDict) -> DataDict:
         self.index = x.index
