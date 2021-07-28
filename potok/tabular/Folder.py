@@ -31,7 +31,7 @@ class Folder(Operator):
         
         if self.n_folds > 1:
             folder = KFold(n_splits=self.n_folds, shuffle=True, random_state=self.seed)
-            folds = DataDict(**{f'Fold_{i}': DataDict(train=index[train_idx], valid=index[valid_idx])
+            folds = DataDict(**{f'Fold_{i+1}': DataDict(train=index[train_idx], valid=index[valid_idx])
                                 for i, (train_idx, valid_idx) in enumerate(folder.split(index))})
         else:
             train_idx, valid_idx = train_test_split(index, test_size=self.split_ratio, random_state=self.seed)
@@ -45,7 +45,7 @@ class Folder(Operator):
         if self.n_folds > 1:
             folder = KFold(n_splits=self.n_folds, shuffle=True, random_state=self.seed)
 
-            folds = DataDict(**{f'Fold_{i}':
+            folds = DataDict(**{f'Fold_{i+1}':
                                 DataDict(
                                     train=index[index.get_level_values(self.index_name).isin(values[train_idx])],
                                     valid=index[index.get_level_values(self.index_name).isin(values[valid_idx])])
@@ -71,7 +71,7 @@ class Folder(Operator):
         return y_frwd
 
     def get_folds(self, xy: DataDict) -> DataDict:
-        units = xy.units
+        units = xy.keys()
         if 'train' in units:
             units = [unit + f'_{i}' if unit == 'valid' else unit for i, unit in enumerate(units)]
             units.remove('train')
@@ -79,7 +79,7 @@ class Folder(Operator):
             folds = {k: valid_xy.get_by_index(v) for k, v in self.folds.items()}
             [fold.__setstate__({unit: xy[unit] for unit in units}) for k, fold in folds.items()]
         else:
-            folds = {f'Fold_{i}': xy for i in range(self.n_folds)}
+            folds = {f'Fold_{i+1}': xy for i in range(self.n_folds)}
         return DataDict(**folds)
 
 

@@ -33,7 +33,7 @@ class ImageClassificationData(Data):
         elif preprocessor is not None and data is not None:
             self.data = np.asarray(self._preprocess_(data, preprocessor))
 
-    def __post_init__(self, path, target_map):
+    def __post_init__(self, path: Path, target_map: dict) -> None:
         imgs = list(path.glob('**/*.jpg'))
         idx = list(range(len(imgs)))
         df = pd.DataFrame(data={'img_path': imgs},  index=idx)

@@ -5,6 +5,7 @@ from .LightGBM import LightGBM
 from .LinReg import LinReg
 from .DKL import Dkl
 from .Operators import TransformY
+from .Bagging import Bagging
 from .utils import SyntheticData
 
 

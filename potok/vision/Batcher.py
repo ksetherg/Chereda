@@ -35,9 +35,10 @@ class Batcher(Operator):
         x_frwd = self.x_forward(x)
         return x_frwd
 
-    def _batch_sampler_(self, indxs, batch_size):
-        indx_sampler = SubsetRandomSampler(indxs)
-        batch_sampler = BatchSampler(indx_sampler, batch_size, drop_last=False)
+    @staticmethod
+    def _batch_sampler_(indxs, batch_size):
+        index_sampler = SubsetRandomSampler(indxs)
+        batch_sampler = BatchSampler(index_sampler, batch_size, drop_last=False)
         return list(batch_sampler)
 
     @ApplyToDataDict()

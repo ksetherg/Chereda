@@ -56,19 +56,40 @@ class Layer(Node):
         result = DataDict(**res)
         return result
 
-    @staticmethod
-    def _flatten_forward_(data: DataDict) -> DataDict:
-        units1 = data.units
-        if isinstance(data[units1[0]], DataDict):
-            units2 = data[units1[0]].units
-            if isinstance(data[units1[0]][units2[0]], DataDict):
-                data = data[units1[0]]
+    def _flatten_forward_(self, data: DataDict) -> DataDict:
+        keys1 = data.keys()
+        if isinstance(data[keys1[0]], DataDict):
+            keys2 = data[keys1[0]].keys()
+            if isinstance(data[keys1[0]][keys2[0]], DataDict):
+                data = DataDict(**{k1 + '_' + k2: v2 for k1, v1 in data.items() for k2, v2 in v1.items()})
         return data
 
     def _flatten_backward_(self, data: DataDict) -> DataDict:
         if len(data) != len(self.layer):
-            data = DataDict(data_1=data)
+            grouper = int(round(len(data) / len(self.layer)))
+            assert grouper > 1, 'Something super wrong.'
+            n_iter = int(round(len(data) / grouper))
+            shaped = DataDict()
+            for i in range(n_iter):
+                subkeys = data.keys()[i * grouper: (i + 1) * grouper]
+                subdict = {k: v for k, v in data.items() if k in subkeys}
+                shaped[f'data_{i + 1}'] = DataDict(**subdict)
+            return shaped
         return data
+
+    # @staticmethod
+    # def _flatten_forward_(data: DataDict) -> DataDict:
+    #     units1 = data.keys
+    #     if isinstance(data[units1[0]], DataDict):
+    #         units2 = data[units1[0]].units
+    #         if isinstance(data[units1[0]][units2[0]], DataDict):
+    #             data = data[units1[0]]
+    #     return data
+    #
+    # def _flatten_backward_(self, data: DataDict) -> DataDict:
+    #     if len(data) != len(self.layer):
+    #         data = DataDict(data_1=data)
+    #     return data
 
 
 # class Layer(Node):

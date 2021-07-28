@@ -5,7 +5,6 @@ import numpy as np
 import gc
 from pathlib import Path
 
-
 from ..core import Regressor, DataDict, Data
 
 
@@ -52,7 +51,13 @@ class NNModel(Regressor):
         y_new = torch.from_numpy(y.data)
         y_new = y_new.to(torch.device("cuda"), dtype=torch.long)
         return y_new
-    
+
+    # def _transform_forward_(self):
+    #     pass
+    #
+    # def _transform_backward_(self):
+    #     pass
+
     def _fit_(self, x: Data, y: Data) -> None:
         self.model.train()
 

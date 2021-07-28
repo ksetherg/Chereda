@@ -18,7 +18,7 @@ class ApplyToDataDict:
     #     return self.apply(self.wrapped, self.wrapped.__self__, *args, **kwargs)
     
     def apply(self, wrapped, instance, *args, **kwargs):
-        units_list = [arg.units for arg in args]
+        units_list = [arg.keys() for arg in args]
         units = sorted(set.intersection(*map(set, units_list)), key=units_list[0].index)
 
         if ('train' in units) and (self.mode != 'all'):

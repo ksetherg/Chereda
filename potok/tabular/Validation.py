@@ -37,7 +37,7 @@ class Validation(Operator):
     def y_backward(self, y_frwd: DataDict) -> DataDict:
         y_bck = self.folder.y_backward(y_frwd)
         y = DataDict(train=y_bck['valid'])
-        units = y_bck.units
+        units = y_bck.keys()
         units.remove('valid')
         y.__setstate__({unit: y_bck[unit] for unit in units})
         y = y.reindex(self.index)

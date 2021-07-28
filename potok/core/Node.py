@@ -103,9 +103,22 @@ class Operator(Node):
         return y
 
 
+class Function(Node):
+    """Not parallelizable"""
+    def __init__(self, leaf, **kwargs):
+        super().__init__(**kwargs)
+        self.leaf = leaf
+
+
 class Regressor(Node):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+    def _transform_forward_(self):
+        pass
+
+    def _transform_backward_(self):
+        pass
 
     def _fit_(self, x: Data, y: Data) -> None:
         return None

@@ -5,13 +5,11 @@ import torch
 from time import gmtime, strftime
 from pathlib import Path
 
-
 from ..core import Node, ApplyToDataDict, DataDict, Data
 
+
 class EpochTrainer(Node):
-    def __init__(self, model,
-                    epochs,
-                    **kwargs):
+    def __init__(self, model, epochs, **kwargs):
         super().__init__(**kwargs)
         self.model = model
         self.epochs = epochs
@@ -59,7 +57,7 @@ class EpochTrainer(Node):
             #                             'valid': error['valid']}, e)
         return x, y2
 
-    def predict_forward(self, x : DataDict) -> DataDict:
+    def predict_forward(self, x: DataDict) -> DataDict:
         x_frwd = self.transform_forward(x)
         y_frwd = self.model.predict(x_frwd)
         return y_frwd

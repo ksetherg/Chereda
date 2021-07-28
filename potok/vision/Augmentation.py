@@ -53,7 +53,8 @@ class AlbAugment(Node):
         else:
             return args
             
-    def predict_forward(self, x : DataDict) -> DataDict:
+    def predict_forward(self, x: DataDict) -> DataDict:
+        """Central crop and resize"""
         x_aug = copy.copy(x.X)
         x_aug = self.augment(x_aug, augs=self.augmentations)
         return x_aug

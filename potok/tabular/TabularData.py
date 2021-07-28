@@ -13,8 +13,18 @@ class TabularData(Data):
                  data: pd.DataFrame,
                  target: list = None, 
                  ):
+        assert isinstance(target, list) and isinstance(data, pd.DataFrame), 'Invalid input type.'
         self.data = data
         self.target = target
+
+    def __getitem__(self, cols: List[str]) -> 'TabularData':
+        assert isinstance(cols, list), 'Invalid key type.'
+        sub_df = self.data[cols]
+        new = self.copy(data=sub_df)
+        return new
+
+    def __len__(self) -> int:
+        return len(self.data)
 
     @property
     def X(self) -> 'TabularData':

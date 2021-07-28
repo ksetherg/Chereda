@@ -125,7 +125,7 @@ class LightGBM(Regressor):
             prediction = pd.DataFrame(prediction, index=x.index)
         elif self.mode == 'Regressor':
             prediction = self.model.predict(x_new)
-            prediction = pd.DataFrame(prediction, index=x.index, columns=[self.target])
+            prediction = pd.DataFrame(prediction, index=x.index, columns=self.target)
         else:
             raise Exception('Unknown mode.')
         y = TabularData(data=prediction, target=self.target)
