@@ -108,6 +108,7 @@ class Function(Node):
     def __init__(self, leaf, **kwargs):
         super().__init__(**kwargs)
         self.leaf = leaf
+    """переопределить save and load можно сохранять leaf отдельно"""
 
 
 class Regressor(Node):

@@ -6,6 +6,7 @@ import joblib
 
 from ..core import Regressor, ApplyToDataDict, DataDict
 from .TabularData import TabularData
+from .HyperOptimization import HrPrmOptRange, HrPrmOptChoise
 
 
 class LightGBM(Regressor):
@@ -33,8 +34,14 @@ class LightGBM(Regressor):
             learning_rate=0.05,
             num_class=num_class,
             objective=objective,
-            subsample=0.8,
-            colsample_bytree=0.8,
+            max_depth=HrPrmOptChoise(6, list(range(2, 12))),
+            num_leaves=HrPrmOptChoise(31, list(range(8, 56))),
+            # log10_min_child_weight=HrPrmOptRange(0, -3.0, 3.0),
+            min_split_gain=HrPrmOptRange(0.5, 0.0, 1.0),
+            subsample=HrPrmOptRange(0.8, 0.5, 1.0),
+            colsample_bytree=HrPrmOptRange(0.8, 0.5, 1.0),
+            reg_alpha=HrPrmOptRange(0.0, 0.0, 3.0),
+            reg_lambda=HrPrmOptRange(0.0, 0.0, 3.0),
             # class_weight='balanced',
             importance_type='split',
             n_jobs=-1,
@@ -74,8 +81,8 @@ class LightGBM(Regressor):
             self.model = lgb.LGBMClassifier()
         else:
             raise Exception('Unknown mode %s' % self.mode)
-
-        self.model.set_params(**self.model_params)
+        params = {k: (x.value if isinstance(x, (HrPrmOptRange, HrPrmOptChoise)) else x) for k, x in self.model_params.items()}
+        self.model.set_params(**params)
 
     def _fit_(self, x: DataDict, y: DataDict) -> None:
         self._set_model_()

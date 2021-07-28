@@ -34,8 +34,8 @@ class ApplyToDataDict:
         else:
             raise Exception()
 
-        if isinstance(res[0], tuple):
-            raise Exception('Probably fit method was wrapped, it is forbidden.')
+        # if isinstance(res[0], tuple):
+        #     raise Exception('Probably fit method was wrapped, it is forbidden.')
             # result = []
             # for i in range(len(res[0])):
             #     arg = [var[i] for var in res]
