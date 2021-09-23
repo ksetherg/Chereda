@@ -1,7 +1,7 @@
 from typing import List, Iterator, Tuple
 import copy
 
-from ..core import Operator, DataDict
+from potok.core import Operator, DataDict
 
 
 class Bagging(Operator):
@@ -63,4 +63,3 @@ class Bagging(Operator):
 #
 #     def predict_backward(self, y_frwd: DataDict) -> Data:
 #         return y_frwd
-

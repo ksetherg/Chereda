@@ -1,11 +1,10 @@
-from ..core import Node, Operator, ApplyToDataDict, DataDict, Data
+from ..core import Node, Operator, ApplyToDataDict, DataDict
 
 from torch.utils.data import SubsetRandomSampler, BatchSampler
 
 
 class Batcher(Operator):
-    def __init__(self, batch_size,
-                       **kwargs):
+    def __init__(self, batch_size: int, **kwargs: dict):
         super().__init__(**kwargs)
         self.batch_size = batch_size
 
@@ -21,6 +20,7 @@ class Batcher(Operator):
         return y2
 
     def y_backward(self, y_frwd: DataDict) -> DataDict:
+        # Probably out of date -> y_frwd.values()
         y = self.combine(y_frwd)
         y = y.reindex(self.index)
         return y
@@ -36,7 +36,7 @@ class Batcher(Operator):
         return x_frwd
 
     @staticmethod
-    def _batch_sampler_(indxs, batch_size):
+    def _batch_sampler_(indxs, batch_size: int) -> list:
         index_sampler = SubsetRandomSampler(indxs)
         batch_sampler = BatchSampler(index_sampler, batch_size, drop_last=False)
         return list(batch_sampler)
@@ -47,12 +47,18 @@ class Batcher(Operator):
         return batches
 
     @ApplyToDataDict()
-    def get_batches(self, xy: DataDict, batches: DataDict) -> DataDict:
+    def get_batches(self, xy: DataDict, batches: DataDict) -> list:
         batched = [xy.get_by_index(indx) for indx in batches]
         return batched
 
     @ApplyToDataDict()
-    def combine(self, datas: list):
+    def combine(self, datas: list) -> DataDict:
         combined = datas[0].__class__.combine(datas)
         return combined
+
+    # def transform_forward(self, xy: DataDict) -> DataDict:
+    #     flattened = DataDict(**{key + '_' + str(i + 1): v for key in xy.keys() for i, v in enumerate(xy[key])})
+    #     return flattened
+
+    # def transform_backward(self, xy: DataDict) -> DataDict:
 

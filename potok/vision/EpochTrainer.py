@@ -1,4 +1,4 @@
-from typing import List, Iterator, Tuple
+from typing import List,  Tuple
 from torch.utils.tensorboard import SummaryWriter
 import torch.nn.functional as F
 import torch
@@ -67,9 +67,9 @@ class EpochTrainer(Node):
         return y
 
     @ApplyToDataDict()
-    def get_error(self, y_pred: DataDict, y_true: DataDict) -> DataDict:
+    def get_error(self, y_pred: DataDict, y_true: DataDict) -> float:
         pred = torch.from_numpy(y_pred.data)
         true = torch.from_numpy(y_true.data)
         error = F.nll_loss(pred, true)
-        return error
+        return float(error)
     

@@ -1,5 +1,5 @@
 from pathlib import Path
-from ..core import Operator, DataDict
+from potok.core import Operator, DataDict
 
 
 class Validation(Operator):

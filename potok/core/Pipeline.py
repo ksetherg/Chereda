@@ -6,24 +6,25 @@ from .Layer import Layer
 import gc
 from pathlib import Path
 from time import gmtime, strftime
-from typing import List, Iterator, Tuple
+from typing import List, Tuple, Dict
 
 
 class Pipeline(Node):
     """Pipeline works with DataLayer and Layer"""
-    def __init__(self, *nodes, **kwargs):
+    def __init__(self, *nodes: List[Node], **kwargs: dict):
         super().__init__(**kwargs)
         _nodes_ = []
         for node in nodes:
-            if isinstance(node, Pipeline):
-                _nodes_.extend(node.nodes)
-            elif isinstance(node, (Node, Operator)):
+            if isinstance(node, (Node, Operator)):
                 _nodes_.append(node)
             else:
-                raise Exception('Unknown node type.')
+                raise Exception(f'Unknown node type = {type(node)}')
+            # if isinstance(node, Pipeline):
+                # _nodes_.extend(node.nodes)
                 
         self.nodes = _nodes_
         self.layers = None
+        # Todo: решить проблему с шейпами, хорошо бы их генерировать автоматом
         self.shapes = kwargs['shapes']
         assert len(self.shapes) == len(self.nodes), 'Data and nodes shapes do not match.'
 
@@ -33,7 +34,7 @@ class Pipeline(Node):
     def _compile_(self) -> None:
         layers = []
         for node, num in zip(self.nodes, self.shapes):
-            layer = Layer(*[node.copy for i in range(num)])
+            layer = Layer(*[node.copy for _ in range(num)])
             layers.append(layer)
         self.layers = layers
         return None

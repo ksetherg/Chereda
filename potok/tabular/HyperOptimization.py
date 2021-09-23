@@ -2,7 +2,7 @@ from pprint import pprint
 from typing import Union
 from collections import Mapping, Set, Sequence
 
-from ax import ParameterType, RangeParameter, ChoiceParameter, SearchSpace, SimpleExperiment, modelbridge, models
+from ax import ParameterType, RangeParameter, ChoiceParameter, SearchSpace, SimpleExperiment, modelbridge
 
 from ..core import Function
 
@@ -33,16 +33,16 @@ class HyperParamOptimization(Function):
         opt_range_dict = DeepSearch(HrPrmOptRange).get_places(self.leaf)
         opt_choise_dict = DeepSearch(HrPrmOptChoise).get_places(self.leaf)
 
-        opt_rng_list = [RangeParameter(name=k, parameter_type=ParameterType.FLOAT, lower=v.min, upper=v.max) \
-                        for k, v in opt_range_dict.items()]
-
         types = {
             str: ParameterType.STRING,
             int: ParameterType.INT,
-            bool: ParameterType.BOOL
+            bool: ParameterType.BOOL,
+            float: ParameterType.FLOAT
         }
+        opt_rng_list = [RangeParameter(name=k, parameter_type=types[type(v.value)], lower=v.min, upper=v.max)
+                        for k, v in opt_range_dict.items()]
 
-        opt_chs_list = [ChoiceParameter(name=k, parameter_type=types[type(v.value)], values=v.choises) \
+        opt_chs_list = [ChoiceParameter(name=k, parameter_type=types[type(v.value)], values=v.choises)
                         for k, v in opt_choise_dict.items()]
 
         search_space = SearchSpace(parameters=opt_rng_list + opt_chs_list)
@@ -115,7 +115,7 @@ class DeepSearch:
         if path is None:
             path = ''
         if isinstance(obj, self.target_class):
-            yield (path, obj)
+            yield path, obj
 
         if isinstance(obj, Mapping) or hasattr(obj, '__dict__'):
             iterator = lambda x: getattr(x, 'items')()

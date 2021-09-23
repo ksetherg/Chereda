@@ -1,5 +1,4 @@
-from sklearn.model_selection import KFold, train_test_split
-from pathlib import Path
+from sklearn.model_selection import KFold, train_test_split, TimeSeriesSplit
 
 from ..core import Operator, DataDict
 
@@ -19,7 +18,7 @@ class Folder(Operator):
         self.folds = None
 
     def _fit_(self, x: DataDict, y: DataDict) -> None:
-        assert x['train'] is not None, 'Train required.'
+        assert x['train'] is not None, 'Train data is required.'
         if self.index_name is not None:
             self.folds = self.generate_folds_by_index(x, y)
         else:
@@ -38,7 +37,7 @@ class Folder(Operator):
             folds = {'Fold_1': DataDict(train=index[train_idx], valid=index[valid_idx])}
         return folds
 
-    def generate_folds_by_index(self, x: DataDict, y: DataDict) -> dict:
+    def generate_folds_by_index(self, x: DataDict, y: DataDict) -> DataDict:
         index = x['train'].index
         values = x['train'].index.get_level_values(self.index_name).unique().to_numpy()
 
@@ -52,9 +51,9 @@ class Folder(Operator):
                                 for i, (train_idx, valid_idx) in enumerate(folder.split(values))})
         else:
             train_idx, valid_idx = train_test_split(values, test_size=self.split_ratio, random_state=self.seed)
-            folds = {'Fold_1':
+            folds = DataDict(**{'Fold_1':
                          DataDict(train=index[index.get_level_values(self.index_name).isin(values[train_idx])],
-                                  valid=index[index.get_level_values(self.index_name).isin(values[valid_idx])])}
+                                  valid=index[index.get_level_values(self.index_name).isin(values[valid_idx])])})
         return folds
 
     def x_forward(self, x: DataDict) -> DataDict:
@@ -82,4 +81,26 @@ class Folder(Operator):
             folds = {f'Fold_{i+1}': xy for i in range(self.n_folds)}
         return DataDict(**folds)
 
+
+class FolderByTime(Folder):
+    def __init__(self,
+                 n_folds: int = 5,
+                 split_ratio: float = 0.2,
+                 index_name: str = None,
+                 seed: int = 4242,
+                 **kwargs):
+        super().__init__(n_folds, split_ratio, index_name, seed, **kwargs)
+
+    def generate_folds_by_index(self, x: DataDict, y: DataDict) -> DataDict:
+        index = x['train'].index
+        values = x['train'].index.get_level_values(self.index_name).unique().to_numpy()
+
+        folder = TimeSeriesSplit(n_splits=self.n_folds)
+
+        folds = DataDict(**{f'Fold_{i + 1}':
+                            DataDict(train=index[index.get_level_values(self.index_name).isin(values[train_idx])],
+                                     valid=index[index.get_level_values(self.index_name).isin(values[valid_idx])])
+                                         for i, (train_idx, valid_idx) in enumerate(folder.split(values))})
+
+        return folds
 

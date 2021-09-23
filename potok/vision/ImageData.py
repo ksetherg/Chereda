@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Any
+from typing import List, Any, Callable
 from pathlib import Path
 import pandas as pd
 import numpy as np
@@ -26,14 +26,14 @@ class ImageClassificationData(Data):
 
         if df is None:
             assert path is not None, 'Path to image dir is required.'
-            self.__post_init__(Path(path), target_map)
+            self._post_init_(Path(path), target_map)
         
         if preprocessor is not None and data is None:
             self.data = np.asarray(self._preprocess_(self._load_(), preprocessor))
         elif preprocessor is not None and data is not None:
             self.data = np.asarray(self._preprocess_(data, preprocessor))
 
-    def __post_init__(self, path: Path, target_map: dict) -> None:
+    def _post_init_(self, path: Path, target_map: dict) -> None:
         imgs = list(path.glob('**/*.jpg'))
         idx = list(range(len(imgs)))
         df = pd.DataFrame(data={'img_path': imgs},  index=idx)
@@ -62,7 +62,7 @@ class ImageClassificationData(Data):
         target = chunk['target']
         return img, target
 
-    def _preprocess_(self, x: list, preprocessor: object) -> list:
+    def _preprocess_(self, x: list, preprocessor: Callable) -> list:
         prep_x = []
         for i, img in enumerate(tqdm(x)):
             img_new = preprocessor(img)

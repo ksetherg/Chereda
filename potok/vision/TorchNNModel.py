@@ -1,4 +1,4 @@
-from typing import List, Iterator, Tuple
+from typing import List, Tuple
 import torch
 import torch.nn.functional as F
 import numpy as np
@@ -38,8 +38,8 @@ class NNModel(Regressor):
             checkpoint = torch.load(path)
             self.model.load_state_dict(checkpoint['model_state_dict'])
             self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        except:
-            raise Exception('Weights do not exsist.')
+        except OSError:
+            raise Exception('Cant find Model weights.')
             
     def transform_x(self, x: Data) -> Data:
         x_new = np.swapaxes(x.data, -1, 1)
@@ -84,4 +84,3 @@ class NNModel(Regressor):
             logits = F.log_softmax(y_pred, dim=1)
             pred = x.copy(data=logits.cpu().numpy())
         return pred
-

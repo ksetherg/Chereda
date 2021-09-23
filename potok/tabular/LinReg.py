@@ -1,7 +1,8 @@
 import statsmodels.api as sm
 import pandas as pd
 # from typing import List, Iterator, Tuple
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, Ridge, Lasso
+from sklearn.mixture import GaussianMixture
 
 from ..core import Regressor, ApplyToDataDict, DataDict
 from .TabularData import TabularData
@@ -43,7 +44,7 @@ class LinReg(Regressor):
         print('Training Linear Model')
         print(f'X_train = {x_train.shape} y_train = {y_train.shape}')
 
-        self.model = LinearRegression().fit(x_train, y_train, sample_weight=w_train)
+        self.model = LinearRegression().fit(x_train, y_train,)
         return None
 
     @ApplyToDataDict()
@@ -52,6 +53,8 @@ class LinReg(Regressor):
         x_new = x.data[self.features]
         # prediction = self.model.predict(exog=X)
         prediction = self.model.predict(x_new)
-        prediction = pd.DataFrame(prediction, index=x.index, columns=[self.target])
+        prediction = pd.DataFrame(prediction, index=x.index, columns=self.target)
+        # TODO: сделать инвариантно к типу, например x.__class__.__init__(data=prediction, target=self.target)
         y = TabularData(data=prediction, target=self.target)
         return y
+

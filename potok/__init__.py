@@ -1,4 +1,5 @@
 from .core import Data, DataDict, ApplyToDataDict, Node, Operator, Pipeline, Layer
-from .tabular import TabularData, Folder, Validation, LightGBM, LinReg, Dkl, SyntheticData, TransformY, Bagging
+from .tabular import TabularData, Folder, FolderByTime, LightGBM, LinReg, Dkl, SyntheticData, TransformY
 from .vision import Augmentation, Batcher, BatchTrainer, EpochTrainer, Folder, ImageData, TorchNNModel
+from .methods import  Validation, Bagging
 

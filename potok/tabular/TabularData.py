@@ -5,6 +5,7 @@ from typing import List
 
 from ..core import Data
 
+
 @dataclass(init=False)
 class TabularData(Data):
     data: pd.DataFrame

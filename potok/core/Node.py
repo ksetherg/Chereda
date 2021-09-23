@@ -2,7 +2,7 @@ from __future__ import annotations
 import copy
 import dill
 from pathlib import Path
-from typing import List, Iterator, Tuple
+from typing import List,  Tuple
 
 from .Data import Data, DataDict
 
@@ -41,7 +41,7 @@ class Serializable:
 
     # @classmethod
     # def load(cls, prefix: Path = None) -> None:
-    #     по факту этот подход лучше, так как в теории не зависит от иницилизации пайплайна
+    #     TODO: по факту этот подход лучше, так как в теории не зависит от иницилизации пайплайна
     #     file_name = prefix / (cls.__name__ + '.dill')
     #     with open(file_name, "rb") as dill_file:
     #         instance = dill.load(dill_file)
@@ -104,11 +104,11 @@ class Operator(Node):
 
 
 class Function(Node):
-    """Not parallelizable"""
+    # Not parallelizable
     def __init__(self, leaf, **kwargs):
         super().__init__(**kwargs)
         self.leaf = leaf
-    """переопределить save and load можно сохранять leaf отдельно"""
+    # TODO: переопределить save and load можно сохранять leaf отдельно, примеры func это Early stopping, HyperOpt, Trainer
 
 
 class Regressor(Node):

@@ -1,9 +1,10 @@
 import numpy as np
 from ..core import Operator, DataDict, ApplyToDataDict
+from typing import Tuple, Union
 
 
 class TransformY(Operator):
-    def __init__(self, transform, target, **kwargs):
+    def __init__(self, transform: Union[tuple, str], target: str, **kwargs):
         super().__init__(**kwargs)
         self.transform = transform
         self.target = target
@@ -17,6 +18,9 @@ class TransformY(Operator):
 
         if transform in std_funcs:
             forward, backward = std_funcs[transform]
+        else:
+            forward, backward = transform
+
         self.forward = forward
         self.backward = backward
 

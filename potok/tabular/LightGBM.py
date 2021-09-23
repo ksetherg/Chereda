@@ -31,19 +31,19 @@ class LightGBM(Regressor):
 
         self.model_params = dict(
             n_estimators=2000,
-            learning_rate=0.05,
+            learning_rate=0.1,
             num_class=num_class,
             objective=objective,
-            max_depth=HrPrmOptChoise(6, list(range(2, 12))),
-            num_leaves=HrPrmOptChoise(31, list(range(8, 56))),
+            # max_depth=HrPrmOptChoise(2, list(range(2, 12))),
+            # num_leaves=HrPrmOptChoise(31, list(range(8, 56))),
             # log10_min_child_weight=HrPrmOptRange(0, -3.0, 3.0),
-            min_split_gain=HrPrmOptRange(0.5, 0.0, 1.0),
-            subsample=HrPrmOptRange(0.8, 0.5, 1.0),
-            colsample_bytree=HrPrmOptRange(0.8, 0.5, 1.0),
-            reg_alpha=HrPrmOptRange(0.0, 0.0, 3.0),
-            reg_lambda=HrPrmOptRange(0.0, 0.0, 3.0),
+            # min_split_gain=HrPrmOptRange(0.5, 0.0, 1.0),
+            # subsample=HrPrmOptRange(0.5, 0.5, 1.0),
+            # colsample_bytree=HrPrmOptRange(0.5, 0.5, 1.0),
+            # reg_alpha=HrPrmOptRange(1.0, 0.0, 3.0),
+            # reg_lambda=HrPrmOptRange(0.0, 0.0, 3.0),
             # class_weight='balanced',
-            importance_type='split',
+            importance_type='gain',
             n_jobs=-1,
         )
 
@@ -71,8 +71,8 @@ class LightGBM(Regressor):
         path = prefix / 'lightgbm.pkl'
         try:
             self.model = joblib.load(path)
-        except:
-            raise Exception('Weights do not exsist.')
+        except OSError:
+            raise Exception('Cant find Model weights.')
 
     def _set_model_(self):
         if self.mode == 'Regressor':
@@ -132,10 +132,11 @@ class LightGBM(Regressor):
             prediction = pd.DataFrame(prediction, index=x.index)
         elif self.mode == 'Regressor':
             prediction = self.model.predict(x_new)
-            prediction = pd.DataFrame(prediction, index=x.index, columns=self.target)
+            prediction = pd.DataFrame(prediction, index=x.index, columns=[self.target])
         else:
             raise Exception('Unknown mode.')
-        y = TabularData(data=prediction, target=self.target)
+        # TODO: сделать инвариантно к типу, например x.__class__.__init__(data=prediction, target=self.target)
+        y = TabularData(data=prediction, target=[self.target])
         return y
 
     def _set_cat_features_(self, features):

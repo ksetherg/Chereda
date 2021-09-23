@@ -120,7 +120,7 @@ class DataDict(Data):
 
     @staticmethod
     def combine(data: List[DataDict]) -> DataDict:
-        #можно сделать просто как метод класса, потому что все равно комбайним поля класса
+        # можно сделать просто как метод класса, потому что все равно комбайним поля класса
         if all([hasattr(v, 'keys') for v in data]):
             units_list = [v.keys() for v in data]
             units = sorted(set.intersection(*map(set, units_list)), key=units_list[0].index)
@@ -133,4 +133,3 @@ class DataDict(Data):
         data_cls = new_data[0][0]
         res = {unit: data_cls.combine(new_data[i]) for i, unit in enumerate(units)}
         return DataDict(**res)
-

@@ -25,6 +25,7 @@ def make_val_and_grad_fn(value_fn):
 
 class Dkl(Operator):
     def __init__(self, indx_list, weight_col='W', **kwargs):
+        super().__init__(**kwargs)
         assert len(indx_list) != 0
         self.indx_list = indx_list
         self.weight_col = weight_col
