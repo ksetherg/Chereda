@@ -70,47 +70,47 @@ class CreateFeatureSpace(Operator):
 
     @staticmethod
     def _create_lag_tao_i_(data, keys, i):
-        df_lag_tao_i = data[keys].shift(i)
+        df_lag_tao_i = data[keys].groupby(level=0).shift(i)
         df_lag_tao_i = df_lag_tao_i.rename(columns={key: key + '_Lag_Tao+{}'.format(i) for key in keys})
         return df_lag_tao_i
 
     @staticmethod
     def _create_rolling_mean_(data, keys, window):
-        df_rolling_mean = data[keys].rolling(window=window).mean()
+        df_rolling_mean = data[keys].groupby(level=0).apply(lambda x: x.rolling(window=window).mean())
         df_rolling_mean = df_rolling_mean.rename(
             columns={key: key + '_Rolling_Mean_Window={}'.format(window) for key in keys})
         return df_rolling_mean
 
     @staticmethod
     def _create_rolling_std_(data, keys, window):
-        df_rolling_std = data[keys].rolling(window=window).std()
+        df_rolling_std = data[keys].groupby(level=0).apply(lambda x: x.rolling(window=window).std())
         df_rolling_std = df_rolling_std.rename(
             columns={key: key + '_Rolling_STD_Window={}'.format(window) for key in keys})
         return df_rolling_std
 
     @staticmethod
     def _create_rolling_max_(data, keys, window):
-        df_rolling_mean = data[keys].rolling(window=window).max()
+        df_rolling_mean = data[keys].groupby(level=0).apply(lambda x: x.rolling(window=window).max())
         df_rolling_mean = df_rolling_mean.rename(
             columns={key: key + '_Rolling_Max_Window={}'.format(window) for key in keys})
         return df_rolling_mean
 
     @staticmethod
     def _create_rolling_min_(data, keys, window):
-        df_rolling_mean = data[keys].rolling(window=window).min()
+        df_rolling_mean = data[keys].groupby(level=0).apply(lambda x: x.rolling(window=window).min())
         df_rolling_mean = df_rolling_mean.rename(
             columns={key: key + '_Rolling_Min_Window={}'.format(window) for key in keys})
         return df_rolling_mean
 
     @staticmethod
     def _create_diff_(data, keys, periods):
-        df_rolling_diff = data[keys].diff(periods=periods)
+        df_rolling_diff = data[keys].groupby(level=0).diff(periods=periods)
         df_rolling_diff = df_rolling_diff.rename(columns={key: key + '_Diff_Lag={}'.format(periods) for key in keys})
         return df_rolling_diff
 
     @staticmethod
     def _create_rate_(data, keys, lag):
-        df_rolling_rate = data[keys] / data[keys].shift(lag)
+        df_rolling_rate = data[keys] / data[keys].groupby(level=0).shift(lag)
         df_rolling_rate = df_rolling_rate.rename(columns={key: key + '_Rate_Lag={}'.format(lag) for key in keys})
         return df_rolling_rate
 
@@ -161,4 +161,3 @@ class CreateFeatureSpace(Operator):
         print('Merging')
         df_merged = pd.concat(dfs, axis=1)
         return df_merged
-

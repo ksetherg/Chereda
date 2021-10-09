@@ -1,4 +1,6 @@
 from sklearn.model_selection import KFold, train_test_split, TimeSeriesSplit
+import pandas as pd
+import numpy as np
 
 from ..core import Operator, DataDict
 
@@ -93,7 +95,7 @@ class FolderByTime(Folder):
 
     def generate_folds_by_index(self, x: DataDict, y: DataDict) -> DataDict:
         index = x['train'].index
-        values = x['train'].index.get_level_values(self.index_name).unique().to_numpy()
+        values = np.sort(x['train'].index.get_level_values(self.index_name).unique().to_numpy())
 
         folder = TimeSeriesSplit(n_splits=self.n_folds)
 
