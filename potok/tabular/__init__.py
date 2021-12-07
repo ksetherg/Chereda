@@ -3,7 +3,7 @@ from .TabularData import TabularData
 from .LightGBM import LightGBM
 from .LinReg import LinReg
 from .DKL import Dkl
-from .Operators import TransformY, CreateFeatureSpace
+from .Operators import TransformY, CreateFeatureSpace, EncodeX
 from .HyperOptimization import HrPrmOptRange, HrPrmOptChoise, HyperParamOptimization, DeepSearch
 from .Error import Error
 from .utils import SyntheticData
