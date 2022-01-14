@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 from ..core import Operator, DataDict, ApplyToDataDict
 from typing import Tuple, Union
+from category_encoders.target_encoder import TargetEncoder
+from category_encoders.cat_boost import CatBoostEncoder
 
 
 class TransformY(Operator):
@@ -161,3 +163,51 @@ class CreateFeatureSpace(Operator):
         print('Merging')
         df_merged = pd.concat(dfs, axis=1)
         return df_merged
+
+
+class EncodeX(Operator):
+    def __init__(self, features_to_encode: list,
+                 categorizer_name: str = None,
+                 **kwargs):
+        super().__init__(**kwargs)
+
+        self.features_to_encode = features_to_encode
+        self.categorizer_name = categorizer_name
+        self.categorizer = None
+
+    @ApplyToDataDict()
+    def x_forward(self, x: DataDict) -> DataDict:
+        df = x.data
+        df_frwd = self.categorizer.transform(df)
+        x_frwd = x.copy(data=df_frwd)
+        return x_frwd
+
+    def _fit_(self, x: DataDict, y: DataDict) -> None:
+        df_x = x['train'].data
+        df_y = y['train'].data[y['train'].target]
+        features = [f for f in self.features_to_encode if f in df_x.columns]
+
+        if self.categorizer_name == 'target':
+            self.categorizer = TargetEncoder(cols=features)
+        elif self.categorizer_name == 'ctbst':
+            self.categorizer = CatBoostEncoder(cols=features)
+        else:
+            raise Exception('Error: unknown categorizer name')
+
+        self.categorizer.fit(df_x, df_y)
+        return None
+
+        # def db_state(self, state):
+        #     state = super().db_state(state)
+        #     state['categorizer'] = None
+        #     return state
+        #
+        # def _db_save_data(self, path):
+        #     if self.categorizer is not None:
+        #         joblib.dump(self.categorizer, path + 'categorizer.trfrm')
+        #
+        # def _db_load_data(self, path):
+        #     try:
+        #         self.categorizer = joblib.load(path + 'categorizer.trfrm')
+        #     except:
+        #         pass
